@@ -16,7 +16,16 @@ from src.modules.boxplot_visualization import create_boxplot_visualization
 from src.modules.outlier_density_analysis import calculate_outlier_density, analyze_outlier_patterns
 from src.modules.zscore_outlier_detection import detect_outliers_zscore, create_zscore_plots, compare_methods
 from src.modules.kmeans_outlier_detection import analyze_kmeans_outliers, compare_with_zscore
-from src.modules.dbscan_outlier_detection import analyze_dbscan_outliers, compare_dbscan_with_kmeans, summarize_dbscan_analysis
+from src.modules.dbscan_outlier_detection import analyze_dbscan_outliers, summarize_dbscan_analysis
+from src.modules.statistical_significance import analyze_statistical_significance
+from src.modules.feature_extraction import extract_features_from_windows
+from src.modules.feature_analysis import analyze_feature_set, create_feature_visualizations, save_feature_set
+from src.modules.pca_analysis import (normalize_features_zscore, apply_pca, analyze_variance_explained,
+                                      create_variance_plot, print_pca_analysis, print_component_contributions,
+                                      example_feature_compression, print_compression_example)
+from src.modules.feature_comparison import compare_feature_selection_methods
+from src.utils.sliding_windows import create_sliding_windows, get_window_statistics
+
 
 def format_time(seconds):
     """
@@ -56,10 +65,10 @@ def main():
         print(f"Carregando dados do participante {participant_id}...")
         
         single_participant_data = load_participant_data(participant_id)
-        print(f"✓ Dados carregados: {single_participant_data.shape[0]} amostras, {single_participant_data.shape[1]} colunas")
+        print(f"Dados carregados: {single_participant_data.shape[0]} amostras, {single_participant_data.shape[1]} colunas")
         
-        # Mostrar a matriz de dados do participante
-        print(f"\n✓ Matriz de dados do participante {participant_id}:")
+        # Mostra estrutura dos dados
+        print(f"\nMatriz de dados do participante {participant_id}:")
         print("-" * 80)
         print("Formato: [Dev_ID, Acc_X, Acc_Y, Acc_Z, Gyro_X, Gyro_Y, Gyro_Z, Mag_X, Mag_Y, Mag_Z, Timestamp, Activity]")
         print("-" * 80)
@@ -187,7 +196,7 @@ def main():
         print("Aplicando K-Means para detectar outliers (ex 3.7)")
         print("Testando diferentes números de clusters: k = 3, 5, 7")
         print("Usando espaço dos módulos dos sensores (3D)")
-        print("Usando amostra de 1/5 dos dados para eficiência")
+        print("Usando amostra de 1/10 dos dados para eficiência")
         
         print("\nExecutando análise K-Means...")
         # Cria pasta para este exercício com subpastas
@@ -210,7 +219,7 @@ def main():
         compare_with_zscore(all_data, kmeans_results, k_zscore=3)
         
         execution_times['Exercícios 3.6 e 3.7'] = time.time() - start_time
-        print(f"\n⏱️  Tempo de execução (incluindo gráficos): {format_time(execution_times['Exercícios 3.6 e 3.7'])}")
+        print(f"\nTempo de execução (incluindo gráficos): {format_time(execution_times['Exercícios 3.6 e 3.7'])}")
         print("\nExercícios 3.6 e 3.7 concluídos!")
         
         # EXERCÍCIO 3.7.1: DBSCAN para deteção de outliers
@@ -222,13 +231,13 @@ def main():
         print("Testando apenas as 2 primeiras combinações de parâmetros:")
         print("  • eps (epsilon): raio da vizinhança")
         print("  • min_samples: mínimo de pontos para formar cluster")
-        print("Usando AMOSTRA dos dados para processamento mais rápido")
+        print("NOTA: DBSCAN usa 1/50 dos dados para evitar problemas de memória")
         
-        # Calcular tamanho da amostra: 1/25 dos dados
-        dbscan_sample_size = len(all_data) // 25
-        print(f"\nExecutando análise DBSCAN com amostra de {dbscan_sample_size:,} pontos (1/25 de {len(all_data):,} totais)...")
+        # Usar 1/50 dos dados (DBSCAN é muito pesado em memória)
+        dbscan_sample_size = len(all_data) // 50
+        print(f"\nExecutando análise DBSCAN com amostra de {dbscan_sample_size:,} pontos (1/50 de {len(all_data):,} totais)...")
         print(f"Configurações: (eps=0.5, ms=5), (eps=0.8, ms=5)")
-        print(f"  → Otimizado para melhor performance!")
+        print(f"(DBSCAN constrói matriz de distâncias N×N, logo requer muito menos pontos que K-Means)")
         
         # Cria pasta para este exercício
         output_dir_371 = "plots/exercicio_3.7.1_dbscan"
@@ -258,8 +267,8 @@ def main():
             
             dbscan_results[key] = result
             
-            print(f"  ✓ {result['n_clusters']} clusters encontrados")
-            print(f"  ✓ {result['n_outliers']:,} outliers ({result['outlier_percentage']:.2f}%)")
+            print(f"  {result['n_clusters']} clusters encontrados")
+            print(f"  {result['n_outliers']:,} outliers ({result['outlier_percentage']:.2f}%)")
             
             # Criar visualização
             print(f"  Criando visualização 3D...")
@@ -274,32 +283,206 @@ def main():
             fig.savefig(filepath, dpi=150, bbox_inches='tight')
             import matplotlib.pyplot as plt
             plt.close(fig)
-            print(f"  ✓ Gráfico salvo: {filepath}")
+            print(f"  Gráfico salvo: {filepath}")
         
         # Resumo da análise
         summarize_dbscan_analysis(dbscan_results)
         
-        # Comparar DBSCAN com K-Means (usando eps=0.8, min_samples=5)
-        if 'eps0.8_ms5' in dbscan_results and kmeans_results:
-            # Pegar resultado K-Means com k=5 para comparação
-            kmeans_k5 = kmeans_results.get('k=5', list(kmeans_results.values())[0])
-            print(f"\nComparando DBSCAN (eps=0.8, ms=5) com K-Means (k=5)...")
-            
-            # Nota: Os dados da comparação são diferentes (amostra vs completo)
-            # então a comparação é apenas ilustrativa
-            print("\nNOTA: DBSCAN usa amostra menor (1/25), K-Means usa amostra maior (1/5)")
-            print("Comparação é apenas ilustrativa dos métodos")
+        # Comparação com K-Means (informativa)
+        if kmeans_results:
+            print(f"\nNOTA COMPARATIVA:")
+            print(f"  • DBSCAN: amostra 1/100 (~39k pontos), deteta clusters de forma arbitrária")
+            print(f"  • K-Means: amostra 1/25 (~157k pontos), assume clusters esféricos")
+            print(f"  • Métodos complementares para análise de outliers")
         
         execution_times['Exercício 3.7.1'] = time.time() - start_time
-        print(f"\n⏱️  Tempo de execução (incluindo gráficos): {format_time(execution_times['Exercício 3.7.1'])}")
+        print(f"\nTempo de execução (incluindo gráficos): {format_time(execution_times['Exercício 3.7.1'])}")
         print("\nExercício 3.7.1 concluído!")
+        
+        # EXERCÍCIO 4.1: Análise de Significância Estatística
+        print(f"\nEXERCÍCIO 4.1: ANÁLISE DE SIGNIFICÂNCIA ESTATÍSTICA")
+        print("-" * 60)
+        start_time = time.time()
+        
+        print("Testando normalidade das distribuições (Kolmogorov-Smirnov)")
+        print("Aplicando testes de significância (ANOVA ou Kruskal-Wallis)")
+        print("Determinando poder discriminante dos módulos dos sensores")
+        
+        # Executa análise de significância (sem gráficos)
+        significance_results = analyze_statistical_significance(all_data, output_dir=None)
+        
+        execution_times['Exercício 4.1'] = time.time() - start_time
+        print(f"\nTempo de execução: {format_time(execution_times['Exercício 4.1'])}")
+        print("\nExercício 4.1 concluído!")
+        
+        # EXERCÍCIO 4.2: Extração de Features Temporais e Espectrais
+        print(f"\nEXERCÍCIO 4.2: EXTRAÇÃO DE FEATURES TEMPORAIS E ESPECTRAIS")
+        print("-" * 60)
+        start_time = time.time()
+        
+        print("Baseado no artigo de Zhang & Sawchuk")
+        print("Implementando sliding windows (5s, overlap 50%)")
+        print("Extraindo features temporais e espectrais")
+        
+        # Parâmetros de segmentação
+        window_size_sec = 5
+        overlap = 0.5
+        sampling_rate = 50  # Hz (baseado no dataset)
+        
+        print(f"\nParâmetros de segmentação:")
+        print(f"  • Tamanho da janela: {window_size_sec}s")
+        print(f"  • Overlap: {overlap * 100}%")
+        print(f"  • Taxa de amostragem: {sampling_rate} Hz")
+        print(f"  • Amostras por janela: {window_size_sec * sampling_rate}")
+        
+        # Cria sliding windows
+        print(f"\nCriando sliding windows...")
+        windows = create_sliding_windows(all_data, 
+                                        window_size_sec=window_size_sec,
+                                        overlap=overlap,
+                                        sampling_rate=sampling_rate)
+        
+        # Estatísticas das janelas
+        window_stats = get_window_statistics(windows)
+        print(f"\nEstatísticas das janelas:")
+        print(f"  • Total de janelas: {window_stats['total_windows']}")
+        print(f"  • Janelas válidas: {window_stats['valid_windows']}")
+        print(f"  • Janelas descartadas: {window_stats['discarded_windows']} ({window_stats['discard_rate']:.2f}%)")
+        
+        # Extrai features
+        print(f"\nExtraindo features temporais e espectrais...")
+        feature_matrix, labels, metadata, feature_names = extract_features_from_windows(
+            windows, 
+            sampling_rate=sampling_rate,
+            verbose=True
+        )
+        
+        # Análise do feature set
+        analyze_feature_set(feature_matrix, labels, metadata, feature_names)
+        
+        # Cria visualizações
+        output_dir_42 = "plots/exercicio_4.2_features"
+        create_feature_visualizations(feature_matrix, labels, metadata, feature_names, 
+                                     output_dir=output_dir_42)
+        
+        # Salva feature set
+        save_feature_set(feature_matrix, labels, metadata, feature_names, 
+                        output_dir="data/features")
+        
+        execution_times['Exercício 4.2'] = time.time() - start_time
+        print(f"\nTempo de execução: {format_time(execution_times['Exercício 4.2'])}")
+        print("\nExercício 4.2 concluído!")
+        
+        # EXERCÍCIO 4.3 e 4.4: PCA para Redução de Dimensionalidade
+        print(f"\nEXERCÍCIO 4.3 e 4.4: PCA PARA REDUÇÃO DE DIMENSIONALIDADE")
+        print("-" * 60)
+        start_time = time.time()
+        
+        print("Aplicando PCA para comprimir o espaço de features")
+        
+        # Normalizar features com Z-Score
+        X_normalized, scaler = normalize_features_zscore(feature_matrix)
+        
+        # Aplicar PCA com todos os componentes
+        pca_full, X_transformed_full = apply_pca(X_normalized, n_components=None)
+        
+        # Analisar variância
+        variance_info = analyze_variance_explained(pca_full)
+        n_components_75 = variance_info['n_components_for_threshold'][0.75]
+        
+        # Imprimir análise
+        print_pca_analysis(variance_info, feature_matrix.shape[1])
+        
+        # Criar gráfico de variância
+        output_dir_43 = "plots/exercicio_4.3_pca"
+        plot_path = create_variance_plot(pca_full, variance_info, output_dir=output_dir_43)
+        print(f"Gráfico salvo: {plot_path}")
+        
+        # Exemplo de compressão
+        example_data = example_feature_compression(feature_matrix, labels, n_components_75)
+        print_compression_example(example_data)
+        
+        # Análise de contribuições
+        print_component_contributions(pca_full)
+        
+        execution_times['Exercícios 4.3 e 4.4'] = time.time() - start_time
+        print(f"\nTempo de execução: {format_time(execution_times['Exercícios 4.3 e 4.4'])}")
+        print("Exercícios 4.3 e 4.4 concluídos!")
+        
+        # EXERCÍCIO 4.5 e 4.6: Seleção de Features com Fisher Score e ReliefF
+        print(f"\nEXERCÍCIO 4.5 e 4.6: SELEÇÃO DE FEATURES (FISHER SCORE E ReliefF)")
+        print("-" * 60)
+        start_time = time.time()
+        
+        print("Identificando top-10 features com Fisher Score e ReliefF")
+        
+        # Comparar métodos de seleção de features
+        feature_selection_results = compare_feature_selection_methods(
+            X=feature_matrix,
+            y=labels,
+            feature_names=feature_names,
+            top_k=10,
+            relieff_neighbors=10,
+            relieff_samples=100,
+            verbose=True
+        )
+        
+        execution_times['Exercícios 4.5 e 4.6'] = time.time() - start_time
+        print(f"\nTempo de execução: {format_time(execution_times['Exercícios 4.5 e 4.6'])}")
+        print("Exercícios 4.5 e 4.6 concluídos!")
+        
+        # EXERCÍCIO 4.6.1: Extração de Features Selecionadas
+        print(f"\nEXERCÍCIO 4.6.1: EXTRAÇÃO DE FEATURES SELECIONADAS")
+        print("-" * 60)
+        start_time = time.time()
+        
+        from src.modules.feature_comparison import demonstrate_feature_extraction
+        
+        # Demonstra extração para um instante aleatório
+        sample_idx = np.random.randint(0, len(feature_matrix))
+        extraction_example = demonstrate_feature_extraction(
+            X=feature_matrix,
+            feature_names=feature_names,
+            fisher_ranking=feature_selection_results['fisher_ranking'],
+            relieff_ranking=feature_selection_results['relieff_ranking'],
+            sample_idx=sample_idx,
+            verbose=True
+        )
+        
+        execution_times['Exercício 4.6.1'] = time.time() - start_time
+        print(f"\nTempo de execução: {format_time(execution_times['Exercício 4.6.1'])}")
+        print("Exercício 4.6.1 concluído!")
+        
+        # EXERCÍCIO 4.6.2: Análise de Vantagens e Limitações
+        print(f"\nEXERCÍCIO 4.6.2: ANÁLISE DE VANTAGENS E LIMITAÇÕES")
+        print("-" * 60)
+        start_time = time.time()
+        
+        from src.modules.feature_comparison import analyze_selection_approach
+        
+        # Analisa vantagens e limitações
+        approach_analysis = analyze_selection_approach(
+            fisher_ranking=feature_selection_results['fisher_ranking'],
+            relieff_ranking=feature_selection_results['relieff_ranking'],
+            X_shape=feature_matrix.shape,
+            verbose=True
+        )
+        
+        execution_times['Exercício 4.6.2'] = time.time() - start_time
+        print(f"\nTempo de execução: {format_time(execution_times['Exercício 4.6.2'])}")
+        print("Exercício 4.6.2 concluído!")
+        print("\nAnálise detalhada disponível em ANALISES_E_CONCLUSOES.txt")
         
         # Resumo de tempos de execução
         print(f"\n{'=' * 60}")
         print(f"RESUMO DE TEMPOS DE EXECUÇÃO")
         print(f"{'=' * 60}")
+        total_time = 0
         for exercise, exec_time in execution_times.items():
             print(f"{exercise:30s}: {format_time(exec_time)}")
+            total_time += exec_time
+        print(f"{'=' * 60}")
+        print(f"{'TEMPO TOTAL':30s}: {format_time(total_time)}")
         print(f"{'=' * 60}")
         
         print(f"\nPROJETO CONCLUÍDO!")

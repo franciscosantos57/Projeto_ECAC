@@ -100,18 +100,8 @@ def calculate_outlier_density(data, participant_id="todos_participantes", output
         results['mag_densities'].append(densities['mag'])
         results['activity_names'].append(activity_names.get(activity_id, f"Atividade {activity_id}"))
     
-    # Calcula estatísticas gerais
-    print("\n" + "=" * 60)
-    print("ESTATÍSTICAS GERAIS")
-    print("-" * 60)
-    print(f"Densidade média - Acelerómetro: {np.mean(results['acc_densities']):.2f}%")
-    print(f"Densidade média - Giroscópio: {np.mean(results['gyro_densities']):.2f}%")
-    print(f"Densidade média - Magnetómetro: {np.mean(results['mag_densities']):.2f}%")
-    
-    # Identifica atividades com mais outliers
-    print(f"\nAtividade com mais outliers - Acelerómetro: {results['activity_names'][np.argmax(results['acc_densities'])]} ({max(results['acc_densities']):.2f}%)")
-    print(f"Atividade com mais outliers - Giroscópio: {results['activity_names'][np.argmax(results['gyro_densities'])]} ({max(results['gyro_densities']):.2f}%)")
-    print(f"Atividade com mais outliers - Magnetómetro: {results['activity_names'][np.argmax(results['mag_densities'])]} ({max(results['mag_densities']):.2f}%)")
+    # Estatísticas resumidas
+    print(f"Densidade média de outliers: Acc={np.mean(results['acc_densities']):.1f}% Gyro={np.mean(results['gyro_densities']):.1f}% Mag={np.mean(results['mag_densities']):.1f}%")
     
     # Cria visualização
     create_outlier_density_plot(results, participant_id, output_dir)
@@ -186,51 +176,30 @@ def analyze_outlier_patterns(results):
     Args:
         results (dict): Resultados da análise de densidade
     """
-    print("\n" + "=" * 60)
-    print("ANÁLISE DE PADRÕES")
-    print("-" * 60)
+    # Calcula médias por tipo de atividade
+    static_activities = [1, 2, 3]
+    dynamic_activities = [4, 5, 6, 7]
+    transition_activities = [8, 9, 10, 11, 12, 13, 14, 15, 16]
     
-    # Análise por tipo de atividade
-    static_activities = [1, 2, 3]  # Stand, Sit, Sit and Talk
-    dynamic_activities = [4, 5, 6, 7]  # Walk, Walk and Talk, Climb Stair, Climb Stair and Talk
-    transition_activities = [8, 9, 10, 11, 12, 13, 14, 15, 16]  # Transições
-    
-    def analyze_activity_group(activity_ids, group_name):
+    def calc_group_avg(activity_ids):
         group_indices = [i for i, act_id in enumerate(results['activities']) if act_id in activity_ids]
-        
         if group_indices:
-            acc_avg = np.mean([results['acc_densities'][i] for i in group_indices])
-            gyro_avg = np.mean([results['gyro_densities'][i] for i in group_indices])
-            mag_avg = np.mean([results['mag_densities'][i] for i in group_indices])
-            
-            print(f"\n{group_name}:")
-            print(f"  Acelerómetro: {acc_avg:.2f}%")
-            print(f"  Giroscópio: {gyro_avg:.2f}%")
-            print(f"  Magnetómetro: {mag_avg:.2f}%")
+            return {
+                'acc': np.mean([results['acc_densities'][i] for i in group_indices]),
+                'gyro': np.mean([results['gyro_densities'][i] for i in group_indices]),
+                'mag': np.mean([results['mag_densities'][i] for i in group_indices])
+            }
+        return None
     
-    analyze_activity_group(static_activities, "Atividades Estáticas")
-    analyze_activity_group(dynamic_activities, "Atividades Dinâmicas")
-    analyze_activity_group(transition_activities, "Atividades de Transição")
+    static_avg = calc_group_avg(static_activities)
+    dynamic_avg = calc_group_avg(dynamic_activities)
+    transition_avg = calc_group_avg(transition_activities)
     
-    # Conclusões
-    print(f"\nCONCLUSÕES:")
-    print("-" * 30)
-    
-    # Identifica o sensor com mais outliers
-    avg_acc = np.mean(results['acc_densities'])
-    avg_gyro = np.mean(results['gyro_densities'])
-    avg_mag = np.mean(results['mag_densities'])
-    
-    if avg_gyro > avg_acc and avg_gyro > avg_mag:
-        print("- O giroscópio apresenta a maior densidade média de outliers")
-        print("- Isto sugere que as rotações são mais variáveis que as acelerações lineares")
-    elif avg_acc > avg_gyro and avg_acc > avg_mag:
-        print("- O acelerómetro apresenta a maior densidade média de outliers")
-        print("- Isto sugere que as acelerações lineares são mais variáveis")
-    else:
-        print("- O magnetómetro apresenta a maior densidade média de outliers")
-        print("- Isto pode indicar interferências magnéticas ou orientação variável")
-    
-    print(f"- Densidade média geral: {(avg_acc + avg_gyro + avg_mag)/3:.2f}%")
-    print("- Valores baixos (<5%) indicam dados consistentes")
-    print("- Valores altos (>10%) podem indicar ruído ou transições complexas")
+    # Print resumo minimalista
+    print("\nMédias por tipo de atividade:")
+    if static_avg:
+        print(f"  Estáticas:   Acc={static_avg['acc']:.1f}%  Gyro={static_avg['gyro']:.1f}%  Mag={static_avg['mag']:.1f}%")
+    if dynamic_avg:
+        print(f"  Dinâmicas:   Acc={dynamic_avg['acc']:.1f}%  Gyro={dynamic_avg['gyro']:.1f}%  Mag={dynamic_avg['mag']:.1f}%")
+    if transition_avg:
+        print(f"  Transições:  Acc={transition_avg['acc']:.1f}%  Gyro={transition_avg['gyro']:.1f}%  Mag={transition_avg['mag']:.1f}%")

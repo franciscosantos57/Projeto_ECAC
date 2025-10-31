@@ -183,7 +183,7 @@ def create_3d_visualization_dbscan(data, result, title_suffix=""):
         
         ax.set_xlabel(xlabel, fontsize=10, labelpad=8, fontweight='bold')
         ax.set_ylabel(ylabel, fontsize=10, labelpad=8, fontweight='bold')
-        ax.set_zlabel(zlabel, fontsize=10, labelpad=8, fontweight='bold')
+        ax.set_zlabel(zlabel, fontsize=10, labelpad=12, fontweight='bold')
         ax.set_title(f'{title_suffix_view}\nOutliers: {np.sum(outliers_mask)} '
                     f'({(np.sum(outliers_mask)/len(modules)*100):.2f}%)',
                     fontsize=11, fontweight='bold', pad=10)
@@ -255,28 +255,26 @@ def analyze_dbscan_outliers(data, eps_values, min_samples_values, sample_size=No
         Dict com resultados para cada combinação de parâmetros
     """
     print(f"\n{'=' * 60}")
-    print(f"ANÁLISE DBSCAN - DETEÇÃO DE OUTLIERS")
+    print("DBSCAN clustering:")
     print(f"{'=' * 60}")
     
-    # Usar apenas 1/25 dos dados (4% do dataset) - mesma proporção para todos os algoritmos
+    # Usar 1/50 dos dados para evitar problemas de memória
+    # DBSCAN é muito pesado em memória (matriz de distâncias N×N)
     if sample_size is None:
-        sample_size = len(data) // 25
+        sample_size = len(data) // 50  # 2% do dataset
     
-    print(f"\nUsando amostra de {sample_size:,} pontos (1/25 de {len(data):,} totais)")
+    print(f"Amostra: {sample_size:,} pontos (1/50 dos dados - DBSCAN requer menos que K-Means)")
     np.random.seed(42)
     indices = np.random.choice(len(data), sample_size, replace=False)
     data_sample = data[indices]
     
     results = {}
     
-    print(f"\nTestando {len(eps_values)} valores de epsilon × {len(min_samples_values)} valores de min_samples")
-    print(f"Total de combinações: {len(eps_values) * len(min_samples_values)}\n")
+    print(f"Testando {len(eps_values) * len(min_samples_values)} combinações de parâmetros\n")
     
     for eps in eps_values:
         for min_samples in min_samples_values:
             key = f"eps{eps}_ms{min_samples}"
-            
-            print(f"Testando eps={eps}, min_samples={min_samples}...")
             
             # Detectar outliers
             result = detect_outliers_dbscan(
@@ -289,65 +287,24 @@ def analyze_dbscan_outliers(data, eps_values, min_samples_values, sample_size=No
             
             results[key] = result
             
-            print(f"  ✓ {result['n_clusters']} clusters encontrados")
-            print(f"  ✓ {result['n_outliers']:,} outliers ({result['outlier_percentage']:.2f}%)")
+            print(f"eps={eps}, ms={min_samples}: {result['n_clusters']} clusters, {result['n_outliers']:,} outliers ({result['outlier_percentage']:.1f}%)")
             
             # Criar visualização se solicitado
             if create_plots:
-                print(f"  Criando visualização 3D...")
                 fig = create_3d_visualization_dbscan(
                     data_sample,
                     result,
                     title_suffix=f"Amostra: {len(data_sample):,} pontos"
                 )
                 
-                filename = f"plots/dbscan_3d_eps{eps}_ms{min_samples}.png"
+                filename = f"plots/exercicio_3.7.1_dbscan/dbscan_3d_eps{eps}_ms{min_samples}.png"
+                import os
+                os.makedirs(os.path.dirname(filename), exist_ok=True)
                 fig.savefig(filename, dpi=150, bbox_inches='tight')
                 plt.close(fig)
-                print(f"  ✓ Gráfico salvo: {filename}\n")
+                print(f"  Gráfico salvo: {filename}\n")
     
     return results
-
-
-def compare_dbscan_with_kmeans(data, dbscan_result, kmeans_result):
-    """
-    Compara resultados do DBSCAN com K-Means.
-    
-    Args:
-        data: Array numpy com dados
-        dbscan_result: Resultado do DBSCAN
-        kmeans_result: Resultado do K-Means (do exercício 3.7)
-    """
-    print(f"\n{'=' * 60}")
-    print(f"COMPARAÇÃO: DBSCAN vs K-MEANS")
-    print(f"{'=' * 60}")
-    
-    dbscan_outliers = dbscan_result['outliers']
-    kmeans_outliers = kmeans_result['outliers']
-    
-    # Estatísticas
-    n_dbscan = np.sum(dbscan_outliers)
-    n_kmeans = np.sum(kmeans_outliers)
-    n_both = np.sum(dbscan_outliers & kmeans_outliers)
-    n_only_dbscan = np.sum(dbscan_outliers & ~kmeans_outliers)
-    n_only_kmeans = np.sum(~dbscan_outliers & kmeans_outliers)
-    
-    print(f"\nOutliers detectados:")
-    print(f"  DBSCAN:          {n_dbscan:,} ({dbscan_result['outlier_percentage']:.2f}%)")
-    print(f"  K-Means:         {n_kmeans:,} ({kmeans_result['outlier_percentage']:.2f}%)")
-    print(f"\nSobreposição:")
-    print(f"  Ambos métodos:   {n_both:,} ({(n_both/len(data)*100):.2f}%)")
-    print(f"  Apenas DBSCAN:   {n_only_dbscan:,} ({(n_only_dbscan/len(data)*100):.2f}%)")
-    print(f"  Apenas K-Means:  {n_only_kmeans:,} ({(n_only_kmeans/len(data)*100):.2f}%)")
-    
-    # Concordância
-    if n_dbscan > 0 and n_kmeans > 0:
-        agreement = n_both / max(n_dbscan, n_kmeans) * 100
-        print(f"\nConcordância: {agreement:.1f}%")
-    
-    print(f"\nClusters:")
-    print(f"  DBSCAN:  {dbscan_result['n_clusters']} clusters")
-    print(f"  K-Means: {kmeans_result['n_clusters']} clusters")
 
 
 def summarize_dbscan_analysis(results):
@@ -357,23 +314,6 @@ def summarize_dbscan_analysis(results):
     Args:
         results: Dict com resultados de analyze_dbscan_outliers()
     """
-    print(f"\n{'=' * 60}")
-    print(f"RESUMO DA ANÁLISE DBSCAN")
-    print(f"{'=' * 60}")
-    
-    print(f"\n{'Parâmetros':20s} {'Clusters':>10s} {'Outliers':>12s} {'% Outliers':>12s}")
-    print("-" * 60)
-    
+    print("\nResumo DBSCAN:")
     for key, result in results.items():
-        params = f"eps={result['eps']}, ms={result['min_samples']}"
-        print(f"{params:20s} {result['n_clusters']:>10d} {result['n_outliers']:>12,d} {result['outlier_percentage']:>11.2f}%")
-    
-    print("-" * 60)
-    
-    # Encontrar melhor configuração (maior número de clusters, menos outliers)
-    best_key = max(results.keys(), key=lambda k: (results[k]['n_clusters'], -results[k]['outlier_percentage']))
-    best = results[best_key]
-    
-    print(f"\nMelhor configuração (mais clusters, menos outliers):")
-    print(f"  eps={best['eps']}, min_samples={best['min_samples']}")
-    print(f"  {best['n_clusters']} clusters, {best['outlier_percentage']:.2f}% outliers")
+        print(f"  eps={result['eps']}, ms={result['min_samples']}: {result['n_clusters']} clusters, {result['outlier_percentage']:.1f}% outliers")

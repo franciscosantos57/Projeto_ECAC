@@ -156,9 +156,7 @@ def compare_methods(data, output_dir="plots"):
     """
     EXERCÍCIO 3.5: Compara os métodos IQR e Z-Score para os sensores do pulso direito.
     """
-    print("\n" + "=" * 80)
-    print("EXERCÍCIO 3.5: COMPARAÇÃO DE MÉTODOS - PULSO DIREITO")
-    print("=" * 80)
+    print("Comparando métodos IQR vs Z-Score (pulso direito)\n")
     
     # Filtra dados apenas do pulso direito (device_id = 2)
     right_wrist_data = data[data[:, 0] == 2]
@@ -184,18 +182,10 @@ def compare_methods(data, output_dir="plots"):
     sensor_names = ['Acelerómetro', 'Giroscópio', 'Magnetómetro']
     k_values = [3, 3.5, 4]
     
-    print("\nDENSIDADES DE OUTLIERS POR MÉTODO E SENSOR")
-    print("-" * 80)
-    
     # Tabela de comparação
     comparison_data = {}
     
     for sensor, sensor_name in zip(sensors, sensor_names):
-        print(f"\n{sensor_name.upper()}")
-        print("-" * 80)
-        print(f"{'Atividade':<30} {'IQR':<10} {'Z(k=3)':<10} {'Z(k=3.5)':<10} {'Z(k=4)':<10}")
-        print("-" * 80)
-        
         comparison_data[sensor] = {
             'activities': [],
             'iqr': [],
@@ -230,82 +220,13 @@ def compare_methods(data, output_dir="plots"):
                 comparison_data[sensor]['z3'].append(density_z3)
                 comparison_data[sensor]['z35'].append(density_z35)
                 comparison_data[sensor]['z4'].append(density_z4)
-                
-                # Imprime linha da tabela
-                print(f"{activity_names.get(activity_id, f'Atividade {activity_id}'):<30} "
-                      f"{density_iqr:<10.2f} {density_z3:<10.2f} {density_z35:<10.2f} {density_z4:<10.2f}")
         
-        # Médias
-        print("-" * 80)
+        # Médias por sensor
         avg_iqr = np.mean(comparison_data[sensor]['iqr'])
         avg_z3 = np.mean(comparison_data[sensor]['z3'])
         avg_z35 = np.mean(comparison_data[sensor]['z35'])
         avg_z4 = np.mean(comparison_data[sensor]['z4'])
-        print(f"{'MÉDIA':<30} {avg_iqr:<10.2f} {avg_z3:<10.2f} {avg_z35:<10.2f} {avg_z4:<10.2f}")
-    
-    # Análise e Discussão
-    print("\n" + "=" * 80)
-    print("ANÁLISE E DISCUSSÃO DOS RESULTADOS")
-    print("=" * 80)
-    
-    print("\n1. COMPARAÇÃO ENTRE MÉTODOS:")
-    print("-" * 80)
-    print("   • Método IQR (Tukey):")
-    print("     - Baseado em quartis (Q1, Q3) e intervalo interquartil (IQR = Q3 - Q1)")
-    print("     - Outliers: valores fora de [Q1 - 1.5×IQR, Q3 + 1.5×IQR]")
-    print("     - Robusto a distribuições não-normais")
-    print("     - Não assume distribuição específica dos dados")
-    
-    print("\n   • Método Z-Score:")
-    print("     - Baseado na distância da média em termos de desvios-padrão")
-    print("     - Outliers: valores onde |Z| = |(x - μ) / σ| > k")
-    print("     - Assume distribuição aproximadamente normal")
-    print("     - Sensível a valores extremos na média e desvio-padrão")
-    
-    print("\n2. EFEITO DO PARÂMETRO k:")
-    print("-" * 80)
-    print("   • k=3 (mais restritivo): Deteta mais outliers (~0.3% em distribuição normal)")
-    print("   • k=3.5 (moderado): Deteta menos outliers (~0.05% em distribuição normal)")
-    print("   • k=4 (mais permissivo): Deteta ainda menos outliers (~0.006% em distribuição normal)")
-    print("   • Quanto maior o k, menos pontos são considerados outliers")
-    
-    print("\n3. OBSERVAÇÕES ESPECÍFICAS DOS DADOS:")
-    print("-" * 80)
-    
-    for sensor, sensor_name in zip(sensors, sensor_names):
-        avg_iqr = np.mean(comparison_data[sensor]['iqr'])
-        avg_z3 = np.mean(comparison_data[sensor]['z3'])
-        avg_z35 = np.mean(comparison_data[sensor]['z35'])
-        avg_z4 = np.mean(comparison_data[sensor]['z4'])
-        
-        print(f"\n   {sensor_name}:")
-        print(f"     - Densidade média IQR: {avg_iqr:.2f}%")
-        print(f"     - Densidade média Z-Score (k=3): {avg_z3:.2f}%")
-        print(f"     - Densidade média Z-Score (k=3.5): {avg_z35:.2f}%")
-        print(f"     - Densidade média Z-Score (k=4): {avg_z4:.2f}%")
-        
-        if avg_iqr > avg_z3:
-            print(f"     → IQR deteta mais outliers que Z-Score (k=3)")
-            print(f"     → Sugere que os dados têm distribuição com caudas pesadas")
-        else:
-            print(f"     → Z-Score (k=3) deteta mais outliers que IQR")
-            print(f"     → Sugere presença de valores extremos que afetam média e desvio")
-    
-    print("\n4. RECOMENDAÇÕES:")
-    print("-" * 80)
-    print("   • Para dados de sensores (muitas vezes não-normais): IQR é mais robusto")
-    print("   • Para análise exploratória inicial: usar ambos os métodos")
-    print("   • Para dados com distribuição conhecidamente normal: Z-Score é eficiente")
-    print("   • Para atividades de transição (mais variabilidade): IQR é preferível")
-    print("   • Para dados em tempo real: Z-Score pode ser mais rápido computacionalmente")
-    
-    print("\n5. CONCLUSÕES:")
-    print("-" * 80)
-    print("   • Os dois métodos capturam diferentes aspetos dos outliers")
-    print("   • IQR é mais conservador em distribuições simétricas")
-    print("   • Z-Score permite ajuste fino através do parâmetro k")
-    print("   • A escolha do método depende do contexto e objetivos da análise")
-    print("   • Recomenda-se usar ambos para validação cruzada")
+        print(f"{sensor_name}: IQR={avg_iqr:.1f}%  Z(k=3)={avg_z3:.1f}%  Z(k=3.5)={avg_z35:.1f}%  Z(k=4)={avg_z4:.1f}%")
     
     # Cria gráfico de comparação
     create_comparison_plot(comparison_data, sensor_names, output_dir)

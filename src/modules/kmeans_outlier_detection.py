@@ -102,7 +102,6 @@ def detect_outliers_kmeans(data, n_clusters_list=[3, 5, 7, 10], use_modules=True
     """
     # Prepara os dados para clustering
     if use_modules:
-        # Usa espaço dos módulos (3D)
         modules = calculate_sensor_modules(data)
         clustering_data = np.column_stack([
             modules['acc_module'],
@@ -111,23 +110,17 @@ def detect_outliers_kmeans(data, n_clusters_list=[3, 5, 7, 10], use_modules=True
         ])
         space_name = "módulos"
     else:
-        # Usa espaço original dos eixos x, y, z (9D)
-        clustering_data = data[:, 1:10]  # Colunas 2-10: acc_x até mag_z
+        clustering_data = data[:, 1:10]
         space_name = "valores originais"
     
-    print(f"Usando espaço de {space_name}")
-    print(f"Dimensão dos dados: {clustering_data.shape}")
+    print(f"Dimensão: {clustering_data.shape[0]} amostras × {clustering_data.shape[1]} features")
     
     # NORMALIZAÇÃO Z-SCORE
-    print("Normalizando dados com Z-Score...")
     clustering_data_normalized = zscore_normalization(clustering_data)
-    print(f"  ✓ Dados normalizados: média ≈ 0, desvio padrão ≈ 1")
     
     results = {}
     
-    for n_clusters in n_clusters_list:
-        print(f"\nExecutando K-Means com k={n_clusters}...")
-        
+    for n_clusters in n_clusters_list:        
         # Aplica K-Means nos dados normalizados
         kmeans_result = kmeans_clustering(clustering_data_normalized, n_clusters)
         
@@ -150,16 +143,7 @@ def detect_outliers_kmeans(data, n_clusters_list=[3, 5, 7, 10], use_modules=True
         n_outliers = np.sum(outliers_mask)
         outlier_percentage = (n_outliers / len(data)) * 100
         
-        print(f"  • Clusters formados: {n_clusters}")
-        print(f"  • Iterações até convergência: {kmeans_result['n_iter']}")
-        print(f"  • Inércia: {kmeans_result['inertia']:.2f}")
-        print(f"  • Distância média aos centroides: {mean_distance:.3f}")
-        print(f"  • Distância mediana aos centroides: {median_distance:.3f}")
-        print(f"  • Q1 (percentil 25): {Q1:.3f}")
-        print(f"  • Q3 (percentil 75): {Q3:.3f}")
-        print(f"  • IQR (Q3 - Q1): {IQR:.3f}")
-        print(f"  • Threshold para outliers (Q3 + 1.5×IQR): {threshold:.3f}")
-        print(f"  • Outliers detectados: {n_outliers} ({outlier_percentage:.2f}%)")
+        print(f"k={n_clusters}: {n_outliers} outliers ({outlier_percentage:.1f}%), inércia={kmeans_result['inertia']:.0f}")
         
         results[n_clusters] = {
             'kmeans_result': kmeans_result,
@@ -172,7 +156,7 @@ def detect_outliers_kmeans(data, n_clusters_list=[3, 5, 7, 10], use_modules=True
             'Q1': Q1,
             'Q3': Q3,
             'IQR': IQR,
-            'normalized_data': clustering_data_normalized  # Adiciona dados normalizados
+            'normalized_data': clustering_data_normalized
         }
     
     return results
@@ -283,7 +267,7 @@ def create_3d_visualization(data, kmeans_result, outliers_mask, n_clusters,
         
         ax.set_xlabel(xlabel, fontsize=10, labelpad=8, fontweight='bold')
         ax.set_ylabel(ylabel, fontsize=10, labelpad=8, fontweight='bold')
-        ax.set_zlabel(zlabel, fontsize=10, labelpad=8, fontweight='bold')
+        ax.set_zlabel(zlabel, fontsize=10, labelpad=12, fontweight='bold')
         ax.set_title(f'{title_suffix}\nOutliers: {np.sum(outliers_mask)} '
                     f'({(np.sum(outliers_mask)/len(data)*100):.2f}%)',
                     fontsize=11, fontweight='bold', pad=10)
@@ -358,7 +342,7 @@ def create_3d_visualization(data, kmeans_result, outliers_mask, n_clusters,
     plt.savefig(filepath, dpi=150, bbox_inches='tight')
     plt.close()
     
-    print(f"  ✓ Gráfico 3D (4 ângulos) salvo: {filepath}")
+    print(f"  Gráfico 3D (4 ângulos) salvo: {filepath}")
 
 
 def create_3d_visualization_zoom(data, kmeans_result, outliers_mask, n_clusters, 
@@ -445,7 +429,7 @@ def create_3d_visualization_zoom(data, kmeans_result, outliers_mask, n_clusters,
         
         ax.set_xlabel(xlabel, fontsize=10, labelpad=8, fontweight='bold')
         ax.set_ylabel(ylabel, fontsize=10, labelpad=8, fontweight='bold')
-        ax.set_zlabel(zlabel, fontsize=10, labelpad=8, fontweight='bold')
+        ax.set_zlabel(zlabel, fontsize=10, labelpad=12, fontweight='bold')
         ax.set_title(f'{title_suffix}\nZoom nos Clusters (SEM Outliers)',
                     fontsize=11, fontweight='bold', pad=10)
         
@@ -489,6 +473,12 @@ def create_3d_visualization_zoom(data, kmeans_result, outliers_mask, n_clusters,
                                      markerfacecolor=colors[k], markersize=8,
                                      label=f'Cluster {k+1}'))
     
+    # Adiciona centroides como QUADRADO amarelo
+    legend_elements.append(Line2D([0], [0], marker='s', color='w', 
+                                 markerfacecolor='yellow', markeredgecolor='black',
+                                 markersize=10, markeredgewidth=2,
+                                 label='Centroides'))
+    
     # Título geral
     fig.suptitle(f'K-Means Clustering (k={n_clusters}) - ZOOM SEM OUTLIERS\n'
                 f'Melhor visualização da estrutura dos clusters',
@@ -496,7 +486,7 @@ def create_3d_visualization_zoom(data, kmeans_result, outliers_mask, n_clusters,
     
     # Legenda centralizada
     fig.legend(handles=legend_elements, loc='lower center', 
-              bbox_to_anchor=(0.5, 0.02), ncol=min(n_clusters, 7),
+              bbox_to_anchor=(0.5, 0.02), ncol=min(n_clusters + 1, 7),
               fontsize=10, framealpha=0.95, edgecolor='black', 
               fancybox=True, shadow=True)
     
@@ -510,7 +500,7 @@ def create_3d_visualization_zoom(data, kmeans_result, outliers_mask, n_clusters,
     plt.savefig(filepath, dpi=150, bbox_inches='tight')
     plt.close()
     
-    print(f"  ✓ Gráfico 3D ZOOM (4 ângulos sem outliers) salvo: {filepath}")
+    print(f"  Gráfico 3D ZOOM (4 ângulos sem outliers) salvo: {filepath}")
 
 
 def analyze_kmeans_outliers(data, cluster_range=[3, 5, 7, 10], use_modules=True, 
@@ -530,15 +520,15 @@ def analyze_kmeans_outliers(data, cluster_range=[3, 5, 7, 10], use_modules=True,
         dict: Resultados completos da análise
     """
     print("\n" + "="*60)
-    print("ANÁLISE DE OUTLIERS COM K-MEANS CLUSTERING")
+    print("K-Means clustering:")
     print("="*60)
     
-    # Usar apenas 1/5 dos dados (20% do dataset)
-    sample_size = len(data) // 5
+    # Usar apenas 1/10 dos dados (10% do dataset)
+    sample_size = len(data) // 10
     np.random.seed(42)
     indices = np.random.choice(len(data), sample_size, replace=False)
     data_sample = data[indices]
-    print(f"\nUsando amostra de {sample_size:,} pontos (1/5 de {len(data):,} totais)")
+    print(f"\nUsando amostra de {sample_size:,} pontos (1/10 de {len(data):,} totais)")
     
     # Deteta outliers com K-Means
     results = detect_outliers_kmeans(data_sample, n_clusters_list=cluster_range, 
@@ -570,18 +560,11 @@ def analyze_kmeans_outliers(data, cluster_range=[3, 5, 7, 10], use_modules=True,
                 output_dir=output_dir_zoom
             )
     
-    # Resumo comparativo
-    print("\n" + "="*60)
-    print("RESUMO COMPARATIVO (Método IQR)")
-    print("="*60)
-    print(f"{'k':<5} {'Inércia':<14} {'Mediana':<10} {'IQR':<10} {'Threshold':<12} {'Outliers':<10} {'%':<8}")
-    print("-"*60)
-    
+    # Resumo minimalista
+    print("\nResumo K-Means:")
     for n_clusters in sorted(results.keys()):
         r = results[n_clusters]
-        print(f"{n_clusters:<5} {r['kmeans_result']['inertia']:<14.2f} "
-              f"{r['median_distance']:<10.3f} {r['IQR']:<10.3f} {r['threshold']:<12.3f} "
-              f"{r['n_outliers']:<10} {r['outlier_percentage']:<8.2f}")
+        print(f"  k={n_clusters}: {r['n_outliers']} outliers ({r['outlier_percentage']:.1f}%)")
     
     # Retorna os resultados junto com os dados amostrados
     return {'results': results, 'data_sample': data_sample}
@@ -618,19 +601,11 @@ def compare_with_zscore(data, kmeans_results, k_zscore=3):
     zscore_outliers = acc_outliers | gyro_outliers | mag_outliers
     n_zscore = np.sum(zscore_outliers)
     
-    print("\n" + "="*60)
-    print(f"COMPARAÇÃO: K-MEANS vs Z-SCORE (k={k_zscore})")
-    print("="*60)
-    print(f"Z-Score: {n_zscore} outliers ({n_zscore/len(data_to_use)*100:.2f}%)")
-    print("-"*60)
+    print(f"\nComparação K-Means vs Z-Score (k={k_zscore}):")
+    print(f"  Z-Score: {n_zscore} outliers ({n_zscore/len(data_to_use)*100:.1f}%)")
     
     for n_clusters in sorted(actual_results.keys()):
         kmeans_outliers = actual_results[n_clusters]['outliers_mask']
         n_kmeans = np.sum(kmeans_outliers)
-        
-        # Sobreposição
         overlap = np.sum(kmeans_outliers & zscore_outliers)
-        overlap_pct = (overlap / n_zscore * 100) if n_zscore > 0 else 0
-        
-        print(f"K-Means (k={n_clusters}): {n_kmeans} outliers ({n_kmeans/len(data_to_use)*100:.2f}%)")
-        print(f"  → Sobreposição com Z-Score: {overlap} ({overlap_pct:.1f}%)")
+        print(f"  K-Means (k={n_clusters}): {n_kmeans} outliers, {overlap} em comum")
