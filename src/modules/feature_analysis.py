@@ -49,18 +49,18 @@ def create_feature_visualizations(feature_matrix, labels, metadata, feature_name
 
 def save_feature_set(feature_matrix, labels, metadata, feature_names, output_dir):
     """
-    Salva o feature set em formato CSV e NumPy.
+    Guarda o feature set em formato CSV e NumPy.
     """
     os.makedirs(output_dir, exist_ok=True)
     
-    # Salva em formato NumPy (.npz)
+    # Guarda em formato NumPy (.npz)
     npz_path = os.path.join(output_dir, 'feature_set.npz')
     np.savez(npz_path,
              features=feature_matrix,
              labels=labels,
              feature_names=feature_names)
     
-    # Salva informações em formato texto
+    # Guarda informações em formato texto
     txt_path = os.path.join(output_dir, 'feature_info.txt')
     with open(txt_path, 'w') as f:
         f.write("FEATURE SET INFORMATION\n")
@@ -70,4 +70,4 @@ def save_feature_set(feature_matrix, labels, metadata, feature_names, output_dir
         for i, name in enumerate(feature_names, 1):
             f.write(f"  {i:3d}. {name}\n")
     
-    print(f"Feature set salvo: {npz_path}")
+    print(f"Feature set guardado: {npz_path}")

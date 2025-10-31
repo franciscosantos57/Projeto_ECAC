@@ -1,11 +1,11 @@
 """
-Análise de densidade de outliers usando o método IQR (Interquartile Range).
-Calcula e visualiza a percentagem de outliers por atividade e sensor.
+Análise de densidade de outliers usando o método IQR.
+Calcula e visualiza a percentagem de outliers por atividade.
 """
 
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')  # Backend sem interface gráfica
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import os
 
@@ -14,7 +14,7 @@ from src.utils.sensor_calculations import calculate_sensor_modules
 
 def detect_outliers_iqr(data):
     """
-    Deteta outliers usando o método IQR (definição de Tukey).
+    Deteta outliers usando o método IQR (Tukey).
     Outliers: valores fora do intervalo [Q1 - 1.5*IQR, Q3 + 1.5*IQR]
     """
     # Calcula limites IQR
@@ -22,37 +22,37 @@ def detect_outliers_iqr(data):
     Q3 = np.percentile(data, 75)
     IQR = Q3 - Q1
     
-    # Define limites para outliers (Tukey)
+    # Limites para outliers
     lower_bound = Q1 - 1.5 * IQR
     upper_bound = Q3 + 1.5 * IQR
     
-    # Identifica outliers (valores fora dos limites)
+    # Identifica outliers
     outliers = (data < lower_bound) | (data > upper_bound)
     
     return outliers
 
 def calculate_outlier_density(data, participant_id="todos_participantes", output_dir="plots"):
     """
-    Calcula a densidade de outliers para cada atividade usando apenas sensores do pulso direito.
+    Calcula densidade de outliers por atividade usando sensores do pulso direito.
     
     Args:
-        data (numpy.ndarray): Dados carregados (pode ser de um participante ou todos)
-        participant_id (str/int): ID do participante ou "todos_participantes" (para salvamento)
-        output_dir (str): Diretório onde salvar o gráfico
+        data: Dados carregados
+        participant_id: ID do participante ou "todos_participantes"
+        output_dir: Diretório onde guardar o gráfico
     
     Returns:
-        dict: Dicionário com densidades de outliers por atividade e sensor
+        dict: Densidades de outliers por atividade e sensor
     """
-    # Filtra dados apenas do pulso direito (device_id = 2)
+    # Filtra dados do pulso direito (device_id = 2)
     right_wrist_data = data[data[:, 0] == 2]
     
     if len(right_wrist_data) == 0:
         print("Aviso: Nenhum dado encontrado para o pulso direito")
         return {}
     
-    # Calcula os módulos dos sensores
+    # Calcula módulos dos sensores
     modules = calculate_sensor_modules(right_wrist_data)
-    activities = right_wrist_data[:, 11]  # Coluna 12: Activity Label
+    activities = right_wrist_data[:, 11]
     
     # Mapeamento de atividades
     activity_names = {
@@ -81,7 +81,7 @@ def calculate_outlier_density(data, participant_id="todos_participantes", output
             'mag': modules['mag_module'][activity_mask]
         }
         
-        # Calcula densidade de outliers para cada sensor
+        # Calcula densidade de outliers
         densities = {}
         for sensor_name, sensor_data in activity_data.items():
             if len(sensor_data) > 0:
@@ -100,7 +100,7 @@ def calculate_outlier_density(data, participant_id="todos_participantes", output
         results['mag_densities'].append(densities['mag'])
         results['activity_names'].append(activity_names.get(activity_id, f"Atividade {activity_id}"))
     
-    # Estatísticas resumidas
+    # Estatísticas
     print(f"Densidade média de outliers: Acc={np.mean(results['acc_densities']):.1f}% Gyro={np.mean(results['gyro_densities']):.1f}% Mag={np.mean(results['mag_densities']):.1f}%")
     
     # Cria visualização
@@ -110,13 +110,15 @@ def calculate_outlier_density(data, participant_id="todos_participantes", output
 
 def create_outlier_density_plot(results, participant_id, output_dir="plots"):
     """
-    Cria gráfico de barras com as densidades de outliers por atividade.
+    Cria gráfico com densidades de outliers por atividade.
     
     Args:
-        results (dict): Resultados da análise de densidade
-        participant_id (str/int): ID do participante ou "todos_participantes"
+        results: Resultados da análise de densidade
+        participant_id: ID do participante ou "todos_participantes"
+        output_dir: Diretório onde guardar
     """
-    # Título adaptativo
+    
+    # Título
     if participant_id == "todos_participantes":
         title = 'Densidade de Outliers por Atividade - Pulso Direito (Todos os Participantes)'
     else:
@@ -132,14 +134,13 @@ def create_outlier_density_plot(results, participant_id, output_dir="plots"):
     for i, (sensor, sensor_name, color) in enumerate(zip(sensors, sensor_names, colors)):
         ax = axes[i]
         
-        # Dados para o gráfico
         densities = results[f'{sensor}_densities']
         activities = results['activity_names']
         
         # Cria gráfico de barras
         bars = ax.bar(range(len(activities)), densities, color=color, alpha=0.7)
         
-        # Configura o gráfico
+        # Configura gráfico
         ax.set_title(f'{sensor_name}', fontsize=14, fontweight='bold')
         ax.set_xlabel('Atividade', fontsize=12)
         ax.set_ylabel('Densidade de Outliers (%)', fontsize=12)
@@ -155,7 +156,7 @@ def create_outlier_density_plot(results, participant_id, output_dir="plots"):
     
     plt.tight_layout()
     
-    # Salva o gráfico
+    # Guarda gráfico
     os.makedirs(output_dir, exist_ok=True)
     
     if participant_id == "todos_participantes":
@@ -165,16 +166,16 @@ def create_outlier_density_plot(results, participant_id, output_dir="plots"):
     
     filepath = os.path.join(output_dir, filename)
     plt.savefig(filepath, dpi=300, bbox_inches='tight')
-    plt.close()  # Fecha a figura para liberar memória
+    plt.close()
     
-    print(f"\nGráfico salvo em: {filepath}")
+    print(f"\nGráfico guardado em: {filepath}")
 
 def analyze_outlier_patterns(results):
     """
-    Analisa padrões nos outliers e fornece insights.
+    Analisa padrões nos outliers.
     
     Args:
-        results (dict): Resultados da análise de densidade
+        results: Resultados da análise de densidade
     """
     # Calcula médias por tipo de atividade
     static_activities = [1, 2, 3]
@@ -195,7 +196,7 @@ def analyze_outlier_patterns(results):
     dynamic_avg = calc_group_avg(dynamic_activities)
     transition_avg = calc_group_avg(transition_activities)
     
-    # Print resumo minimalista
+    # Resumo
     print("\nMédias por tipo de atividade:")
     if static_avg:
         print(f"  Estáticas:   Acc={static_avg['acc']:.1f}%  Gyro={static_avg['gyro']:.1f}%  Mag={static_avg['mag']:.1f}%")

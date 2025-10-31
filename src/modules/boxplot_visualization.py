@@ -1,9 +1,13 @@
+"""
+Visualização de boxplots dos módulos dos sensores.
+Separados por atividade e dispositivo.
+"""
+
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-from matplotlib.patches import Patch
 import os
-matplotlib.use('Agg')  # Backend sem interface gráfica
+matplotlib.use('Agg')
 
 from src.utils.sensor_calculations import calculate_sensor_modules
 
@@ -13,15 +17,15 @@ def create_boxplot_visualization(data, participant_id="todos_participantes", out
     Cria boxplots para os módulos dos sensores separados por atividade e dispositivo.
     
     Args:
-        data (numpy.ndarray): Dados carregados (pode ser de um participante ou todos)
-        participant_id (str/int): ID do participante ou "todos_participantes" (para título)
-        output_dir (str): Diretório onde salvar o gráfico
+        data: Dados carregados
+        participant_id: ID do participante ou "todos_participantes"
+        output_dir: Diretório onde guardar o gráfico
     """
     
-    # Calcula os módulos dos sensores
+    # Calcula módulos dos sensores
     modules = calculate_sensor_modules(data)
     
-    # Mapeamento de atividades (baseado na descrição do dataset)
+    # Mapeamento de atividades
     activity_names = {
         1: "Stand", 2: "Sit", 3: "Sit and Talk", 4: "Walk", 5: "Walk and Talk",
         6: "Climb Stair", 7: "Climb Stair and Talk", 8: "Stand->Sit", 9: "Sit->Stand",
@@ -42,27 +46,27 @@ def create_boxplot_visualization(data, participant_id="todos_participantes", out
     else:
         title = f'Boxplots dos Módulos dos Sensores - Participante {participant_id}'
     
-    # Cria a figura com subplots organizados
+    # Cria figura com subplots
     fig, axes = plt.subplots(3, 5, figsize=(20, 12))
     fig.suptitle(title, fontsize=16, fontweight='bold')
     
-    # Cores para cada dispositivo
+    # Cores por dispositivo
     device_colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
     
-    # Para cada tipo de sensor (3 linhas)
+    # Tipos de sensor (3 linhas)
     sensor_types = ['acc_module', 'gyro_module', 'mag_module']
     sensor_titles = ['Módulo do Acelerómetro', 'Módulo do Giroscópio', 'Módulo do Magnetómetro']
     
     for sensor_idx, (sensor_type, sensor_title) in enumerate(zip(sensor_types, sensor_titles)):
-        for device_id in range(1, 6):  # 5 dispositivos (5 colunas)
+        for device_id in range(1, 6):
             ax = axes[sensor_idx, device_id - 1]
             
-            # Filtra dados para o dispositivo específico
+            # Filtra dados do dispositivo
             device_data = data[data[:, 0] == device_id]
             device_modules = modules[sensor_type][data[:, 0] == device_id]
-            device_activities = device_data[:, 11]  # Coluna 12: Activity Label
+            device_activities = device_data[:, 11]
             
-            # Prepara dados para boxplot (agrupa por atividade)
+            # Agrupa por atividade
             boxplot_data = []
             activity_labels = []
             
@@ -70,24 +74,24 @@ def create_boxplot_visualization(data, participant_id="todos_participantes", out
                 activity_mask = device_activities == activity_id
                 activity_modules = device_modules[activity_mask]
                 
-                if len(activity_modules) > 0:  # Só inclui se houver dados
+                if len(activity_modules) > 0:
                     boxplot_data.append(activity_modules)
                     activity_labels.append(f"{int(activity_id)}")
             
-            # Cria o boxplot
+            # Cria boxplot
             if boxplot_data:
                 bp = ax.boxplot(boxplot_data, patch_artist=True, labels=activity_labels)
                 
-                # Colore as caixas
+                # Aplica cores
                 for patch in bp['boxes']:
                     patch.set_facecolor(device_colors[device_id - 1])
                     patch.set_alpha(0.7)
                 
-                # Estiliza os elementos
+                # Estiliza elementos
                 for element in ['whiskers', 'fliers', 'medians', 'caps']:
                     plt.setp(bp[element], color='black', linewidth=1)
                 
-                # Configura o eixo
+                # Configura eixo
                 ax.set_title(f'{device_names[device_id]}', fontsize=10, fontweight='bold')
                 ax.set_xlabel('Atividade', fontsize=8)
                 ax.set_ylabel('Módulo', fontsize=8)
@@ -98,16 +102,16 @@ def create_boxplot_visualization(data, participant_id="todos_participantes", out
                 ax.text(0.5, 0.5, 'Sem dados', ha='center', va='center', transform=ax.transAxes)
                 ax.set_title(f'{device_names[device_id]}', fontsize=10, fontweight='bold')
         
-        # Adiciona título da linha (tipo de sensor)
+        # Título da linha
         axes[sensor_idx, 0].text(-0.2, 0.5, sensor_title, rotation=90, 
                                 ha='center', va='center', transform=axes[sensor_idx, 0].transAxes,
                                 fontsize=12, fontweight='bold')
     
-    # Ajusta o layout para evitar sobreposição
+    # Ajusta layout
     plt.tight_layout()
     plt.subplots_adjust(left=0.15, right=0.95, top=0.93, bottom=0.15)
     
-    # Salva a figura
+    # Guarda figura
     os.makedirs(output_dir, exist_ok=True)
     
     if participant_id == "todos_participantes":
@@ -117,8 +121,8 @@ def create_boxplot_visualization(data, participant_id="todos_participantes", out
     
     filepath = os.path.join(output_dir, filename)
     plt.savefig(filepath, dpi=300, bbox_inches='tight')
-    plt.close()  # Fecha a figura para liberar memória
+    plt.close()
     
-    print(f"Boxplot salvo em: {filepath}")
+    print(f"Boxplot guardado em: {filepath}")
     return fig
 

@@ -108,6 +108,7 @@ def main():
         print("Separados por atividade e dispositivo")
         
         print("\nCriando boxplots organizados em grid...")
+
         # Cria pasta para este exercício
         output_dir_31 = "plots/exercicio_3.1_boxplot"
         os.makedirs(output_dir_31, exist_ok=True)
@@ -127,6 +128,7 @@ def main():
         print("Dados combinados de todos os participantes")
         
         print("\nCalculando densidades de outliers...")
+
         # Cria pasta para este exercício
         output_dir_32 = "plots/exercicio_3.2_outlier_density"
         os.makedirs(output_dir_32, exist_ok=True)
@@ -163,6 +165,7 @@ def main():
         print("Testando com k = 3, 3.5 e 4")
         
         print("\nGerando gráficos (isto pode demorar alguns segundos)...")
+
         # Cria pasta para este exercício com subpastas por k
         output_dir_34 = "plots/exercicio_3.4_zscore"
         os.makedirs(output_dir_34, exist_ok=True)
@@ -199,6 +202,7 @@ def main():
         print("Usando amostra de 1/10 dos dados para eficiência")
         
         print("\nExecutando análise K-Means...")
+
         # Cria pasta para este exercício com subpastas
         output_dir_36 = "plots/exercicio_3.6_3.7_kmeans"
         output_dir_normal = os.path.join(output_dir_36, "normal")
@@ -233,67 +237,23 @@ def main():
         print("  • min_samples: mínimo de pontos para formar cluster")
         print("NOTA: DBSCAN usa 1/50 dos dados para evitar problemas de memória")
         
-        # Usar 1/50 dos dados (DBSCAN é muito pesado em memória)
-        dbscan_sample_size = len(all_data) // 50
-        print(f"\nExecutando análise DBSCAN com amostra de {dbscan_sample_size:,} pontos (1/50 de {len(all_data):,} totais)...")
-        print(f"Configurações: (eps=0.5, ms=5), (eps=0.8, ms=5)")
-        print(f"(DBSCAN constrói matriz de distâncias N×N, logo requer muito menos pontos que K-Means)")
+        print("\nExecutando análise DBSCAN...")
         
         # Cria pasta para este exercício
         output_dir_371 = "plots/exercicio_3.7.1_dbscan"
         os.makedirs(output_dir_371, exist_ok=True)
         
-        # Executar apenas as 2 combinações específicas
-        dbscan_results = {}
-        configs = [(0.5, 5), (0.8, 5)]
-        
-        for eps, min_samples in configs:
-            from src.modules.dbscan_outlier_detection import detect_outliers_dbscan, create_3d_visualization_dbscan, sample_data
-            
-            key = f"eps{eps}_ms{min_samples}"
-            print(f"\nTestando eps={eps}, min_samples={min_samples}...")
-            
-            # Amostrar dados
-            data_sample = sample_data(all_data, sample_size=dbscan_sample_size)
-            
-            # Detectar outliers
-            result = detect_outliers_dbscan(
-                data_sample,
-                eps=eps,
-                min_samples=min_samples,
-                use_modules=True,
-                normalize=True
-            )
-            
-            dbscan_results[key] = result
-            
-            print(f"  {result['n_clusters']} clusters encontrados")
-            print(f"  {result['n_outliers']:,} outliers ({result['outlier_percentage']:.2f}%)")
-            
-            # Criar visualização
-            print(f"  Criando visualização 3D...")
-            fig = create_3d_visualization_dbscan(
-                data_sample,
-                result,
-                title_suffix=f"Amostra: {len(data_sample):,} pontos"
-            )
-            
-            filename = f"dbscan_3d_eps{eps}_ms{min_samples}.png"
-            filepath = os.path.join(output_dir_371, filename)
-            fig.savefig(filepath, dpi=150, bbox_inches='tight')
-            import matplotlib.pyplot as plt
-            plt.close(fig)
-            print(f"  Gráfico salvo: {filepath}")
+        # Executa análise DBSCAN (análogo ao K-Means)
+        dbscan_results = analyze_dbscan_outliers(
+            all_data,
+            eps_values=[0.5, 0.8],
+            min_samples_values=[5],
+            sample_size=None,  # Usa padrão 1/50 dos dados
+            create_plots=True
+        )
         
         # Resumo da análise
         summarize_dbscan_analysis(dbscan_results)
-        
-        # Comparação com K-Means (informativa)
-        if kmeans_results:
-            print(f"\nNOTA COMPARATIVA:")
-            print(f"  • DBSCAN: amostra 1/100 (~39k pontos), deteta clusters de forma arbitrária")
-            print(f"  • K-Means: amostra 1/25 (~157k pontos), assume clusters esféricos")
-            print(f"  • Métodos complementares para análise de outliers")
         
         execution_times['Exercício 3.7.1'] = time.time() - start_time
         print(f"\nTempo de execução (incluindo gráficos): {format_time(execution_times['Exercício 3.7.1'])}")
@@ -471,7 +431,6 @@ def main():
         execution_times['Exercício 4.6.2'] = time.time() - start_time
         print(f"\nTempo de execução: {format_time(execution_times['Exercício 4.6.2'])}")
         print("Exercício 4.6.2 concluído!")
-        print("\nAnálise detalhada disponível em ANALISES_E_CONCLUSOES.txt")
         
         # Resumo de tempos de execução
         print(f"\n{'=' * 60}")

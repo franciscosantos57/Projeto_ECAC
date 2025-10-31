@@ -194,7 +194,7 @@ def create_variance_plot(pca, variance_info, output_dir="plots/exercicio_4.3_pca
             bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.95, 
                      edgecolor='gray', linewidth=1.2, pad=0.7))
     
-    # Salvar figura
+    # Guarda figura
     filepath = os.path.join(output_dir, "pca_variance_explained.png")
     fig.savefig(filepath, dpi=150, bbox_inches='tight')
     plt.close(fig)

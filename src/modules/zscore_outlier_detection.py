@@ -1,11 +1,11 @@
 """
 Deteção de outliers usando o método Z-Score.
-Implementa e compara diferentes thresholds (k=3, 3.5, 4) e compara com método IQR.
+Implementa diferentes thresholds (k=3, 3.5, 4) e compara com método IQR.
 """
 
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')  # Backend sem interface gráfica
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import os
 
@@ -142,7 +142,7 @@ def create_zscore_plots(data, k_values=[3, 3.5, 4], output_dir="plots"):
         plt.tight_layout()
         plt.subplots_adjust(left=0.08, right=0.98, top=0.95, bottom=0.05)
         
-        # Salva o gráfico em subpasta específica para k
+        # Guarda gráfico em subpasta específica para k
         k_dir = os.path.join(output_dir, f'zscore_outliers_k{k}')
         os.makedirs(k_dir, exist_ok=True)
         filename = f'zscore_outliers_k{k}.png'
@@ -150,7 +150,7 @@ def create_zscore_plots(data, k_values=[3, 3.5, 4], output_dir="plots"):
         plt.savefig(filepath, dpi=300, bbox_inches='tight')
         plt.close()
         
-        print(f"  Gráfico salvo em: {filepath}")
+        print(f"  Gráfico guardado em: {filepath}")
 
 def compare_methods(data, output_dir="plots"):
     """
@@ -269,10 +269,10 @@ def create_comparison_plot(comparison_data, sensor_names, output_dir="plots"):
     
     plt.tight_layout()
     
-    # Salva o gráfico
+    # Guarda gráfico
     os.makedirs(output_dir, exist_ok=True)
     filepath = os.path.join(output_dir, 'comparison_iqr_vs_zscore.png')
     plt.savefig(filepath, dpi=300, bbox_inches='tight')
     plt.close()
     
-    print(f"\nGráfico de comparação salvo em: {filepath}")
+    print(f"\nGráfico de comparação guardado em: {filepath}")
