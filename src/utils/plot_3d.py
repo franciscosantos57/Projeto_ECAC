@@ -12,6 +12,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.lines import Line2D
 
 from src.utils.sensor_calculations import calculate_sensor_modules
+from src.utils.constants import COL_ACC_X, COL_ACC_Y, COL_ACC_Z
 
 
 def create_3d_visualization_kmeans(data, kmeans_result, outliers_mask, n_clusters, 
@@ -50,9 +51,9 @@ def create_3d_visualization_kmeans(data, kmeans_result, outliers_mask, n_cluster
         zlabel = 'Módulo Magnetómetro'
         space_name = "módulos"
     else:
-        x = data[:, 1]  # acc_x
-        y = data[:, 2]  # acc_y
-        z = data[:, 3]  # acc_z
+        x = data[:, COL_ACC_X]
+        y = data[:, COL_ACC_Y]
+        z = data[:, COL_ACC_Z]
         xlabel = 'Aceleração X'
         ylabel = 'Aceleração Y'
         zlabel = 'Aceleração Z'
@@ -205,9 +206,9 @@ def create_3d_visualization_kmeans_zoom(data, kmeans_result, outliers_mask, n_cl
         ylabel = 'Módulo Giroscópio'
         zlabel = 'Módulo Magnetómetro'
     else:
-        x = data[:, 1]
-        y = data[:, 2]
-        z = data[:, 3]
+        x = data[:, COL_ACC_X]
+        y = data[:, COL_ACC_Y]
+        z = data[:, COL_ACC_Z]
         xlabel = 'Aceleração X'
         ylabel = 'Aceleração Y'
         zlabel = 'Aceleração Z'

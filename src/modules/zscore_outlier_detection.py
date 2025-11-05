@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import os
 
 from src.utils.sensor_calculations import calculate_sensor_modules
+from src.utils.constants import ACTIVITY_NAMES, DEVICE_NAMES, COL_DEVICE_ID, COL_ACTIVITY
 
 
 def detect_outliers_zscore(data, k=3):
@@ -51,23 +52,8 @@ def create_zscore_plots(data, k_values=[3, 3.5, 4], output_dir="plots"):
     """
     # Calcula os módulos dos sensores
     modules = calculate_sensor_modules(data)
-    activities = data[:, 11]  # Coluna 12: Activity Label
-    devices = data[:, 0]  # Coluna 1: Device ID
-    
-    # Mapeamento de atividades
-    activity_names = {
-        1: "Stand", 2: "Sit", 3: "Sit and Talk", 4: "Walk", 5: "Walk and Talk",
-        6: "Climb Stair", 7: "Climb Stair and Talk", 8: "Stand->Sit", 9: "Sit->Stand",
-        10: "Stand->Sit and Talk", 11: "Sit->Stand and Talk", 12: "Stand->Walk",
-        13: "Walk->Stand", 14: "Stand->Climb Stair", 15: "Climb Stair->Walk",
-        16: "Climb Stair and Talk->Walk and Talk"
-    }
-    
-    # Mapeamento de dispositivos
-    device_names = {
-        1: "Pulso Esquerdo", 2: "Pulso Direito", 3: "Peito", 
-        4: "Perna Superior Direita", 5: "Perna Inferior Esquerda"
-    }
+    activities = data[:, COL_ACTIVITY]
+    devices = data[:, COL_DEVICE_ID]
     
     sensor_types = ['acc_module', 'gyro_module', 'mag_module']
     sensor_titles = ['Acelerómetro', 'Giroscópio', 'Magnetómetro']
@@ -122,7 +108,7 @@ def create_zscore_plots(data, k_values=[3, 3.5, 4], output_dir="plots"):
                         ax.scatter(x_jitter, outliers, c='red', alpha=0.6, s=3, label='Outlier' if activity_id == unique_activities[0] else '')
                 
                 # Configura o eixo
-                ax.set_title(f'{device_names[device_id]}', fontsize=10, fontweight='bold')
+                ax.set_title(f'{DEVICE_NAMES[device_id]}', fontsize=10, fontweight='bold')
                 ax.set_xlabel('Atividade', fontsize=8)
                 ax.set_ylabel('Módulo', fontsize=8)
                 ax.set_xticks(unique_activities)
@@ -159,7 +145,7 @@ def compare_methods(data, output_dir="plots"):
     print("Comparando métodos IQR vs Z-Score (pulso direito)\n")
     
     # Filtra dados apenas do pulso direito (device_id = 2)
-    right_wrist_data = data[data[:, 0] == 2]
+    right_wrist_data = data[data[:, COL_DEVICE_ID] == 2]
     
     if len(right_wrist_data) == 0:
         print("Aviso: Nenhum dado encontrado para o pulso direito")
@@ -167,16 +153,7 @@ def compare_methods(data, output_dir="plots"):
     
     # Calcula os módulos dos sensores
     modules = calculate_sensor_modules(right_wrist_data)
-    activities = right_wrist_data[:, 11]
-    
-    # Mapeamento de atividades
-    activity_names = {
-        1: "Stand", 2: "Sit", 3: "Sit and Talk", 4: "Walk", 5: "Walk and Talk",
-        6: "Climb Stair", 7: "Climb Stair and Talk", 8: "Stand->Sit", 9: "Sit->Stand",
-        10: "Stand->Sit and Talk", 11: "Sit->Stand and Talk", 12: "Stand->Walk",
-        13: "Walk->Stand", 14: "Stand->Climb Stair", 15: "Climb Stair->Walk",
-        16: "Climb Stair and Talk->Walk and Talk"
-    }
+    activities = right_wrist_data[:, COL_ACTIVITY]
     
     sensors = ['acc_module', 'gyro_module', 'mag_module']
     sensor_names = ['Acelerómetro', 'Giroscópio', 'Magnetómetro']
@@ -215,7 +192,7 @@ def compare_methods(data, output_dir="plots"):
                 density_z4 = (np.sum(outliers_z4) / len(activity_data)) * 100
                 
                 # Armazena dados
-                comparison_data[sensor]['activities'].append(activity_names.get(activity_id, f"Atividade {activity_id}"))
+                comparison_data[sensor]['activities'].append(ACTIVITY_NAMES.get(activity_id, f"Atividade {activity_id}"))
                 comparison_data[sensor]['iqr'].append(density_iqr)
                 comparison_data[sensor]['z3'].append(density_z3)
                 comparison_data[sensor]['z35'].append(density_z35)

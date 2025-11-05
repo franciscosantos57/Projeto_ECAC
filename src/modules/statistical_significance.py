@@ -13,7 +13,7 @@ from scipy.stats import kstest, kruskal, f_oneway
 import os
 
 from src.utils.sensor_calculations import calculate_sensor_modules
-from src.utils.constants import ACTIVITY_NAMES, DEVICE_NAMES
+from src.utils.constants import ACTIVITY_NAMES, DEVICE_NAMES, COL_ACTIVITY
 
 
 def test_normality(data, sensor_name, activity_id):
@@ -54,7 +54,7 @@ def analyze_statistical_significance(data, output_dir=None):
     
     # Calcula módulos dos sensores
     modules = calculate_sensor_modules(data)
-    activities = data[:, 11]
+    activities = data[:, COL_ACTIVITY]
     
     sensor_types = ['acc_module', 'gyro_module', 'mag_module']
     sensor_names = ['Acelerómetro', 'Giroscópio', 'Magnetómetro']

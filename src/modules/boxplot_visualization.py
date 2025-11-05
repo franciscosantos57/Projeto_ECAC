@@ -10,6 +10,7 @@ import os
 matplotlib.use('Agg')
 
 from src.utils.sensor_calculations import calculate_sensor_modules
+from src.utils.constants import ACTIVITY_NAMES, DEVICE_NAMES, COL_DEVICE_ID, COL_ACTIVITY
 
 
 def create_boxplot_visualization(data, participant_id="todos_participantes", output_dir="plots"):
@@ -24,21 +25,6 @@ def create_boxplot_visualization(data, participant_id="todos_participantes", out
     
     # Calcula módulos dos sensores
     modules = calculate_sensor_modules(data)
-    
-    # Mapeamento de atividades
-    activity_names = {
-        1: "Stand", 2: "Sit", 3: "Sit and Talk", 4: "Walk", 5: "Walk and Talk",
-        6: "Climb Stair", 7: "Climb Stair and Talk", 8: "Stand->Sit", 9: "Sit->Stand",
-        10: "Stand->Sit and Talk", 11: "Sit->Stand and Talk", 12: "Stand->Walk",
-        13: "Walk->Stand", 14: "Stand->Climb Stair", 15: "Climb Stair->Walk",
-        16: "Climb Stair and Talk->Walk and Talk"
-    }
-    
-    # Mapeamento de dispositivos
-    device_names = {
-        1: "Pulso Esquerdo", 2: "Pulso Direito", 3: "Peito", 
-        4: "Perna Superior Direita", 5: "Perna Inferior Esquerda"
-    }
     
     # Título adaptativo
     if participant_id == "todos_participantes":
@@ -62,9 +48,9 @@ def create_boxplot_visualization(data, participant_id="todos_participantes", out
             ax = axes[sensor_idx, device_id - 1]
             
             # Filtra dados do dispositivo
-            device_data = data[data[:, 0] == device_id]
-            device_modules = modules[sensor_type][data[:, 0] == device_id]
-            device_activities = device_data[:, 11]
+            device_data = data[data[:, COL_DEVICE_ID] == device_id]
+            device_modules = modules[sensor_type][data[:, COL_DEVICE_ID] == device_id]
+            device_activities = device_data[:, COL_ACTIVITY]
             
             # Agrupa por atividade
             boxplot_data = []
@@ -92,7 +78,7 @@ def create_boxplot_visualization(data, participant_id="todos_participantes", out
                     plt.setp(bp[element], color='black', linewidth=1)
                 
                 # Configura eixo
-                ax.set_title(f'{device_names[device_id]}', fontsize=10, fontweight='bold')
+                ax.set_title(f'{DEVICE_NAMES[device_id]}', fontsize=10, fontweight='bold')
                 ax.set_xlabel('Atividade', fontsize=8)
                 ax.set_ylabel('Módulo', fontsize=8)
                 ax.tick_params(axis='x', rotation=45, labelsize=7)
@@ -100,7 +86,7 @@ def create_boxplot_visualization(data, participant_id="todos_participantes", out
                 ax.grid(True, alpha=0.3)
             else:
                 ax.text(0.5, 0.5, 'Sem dados', ha='center', va='center', transform=ax.transAxes)
-                ax.set_title(f'{device_names[device_id]}', fontsize=10, fontweight='bold')
+                ax.set_title(f'{DEVICE_NAMES[device_id]}', fontsize=10, fontweight='bold')
         
         # Título da linha
         axes[sensor_idx, 0].text(-0.2, 0.5, sensor_title, rotation=90, 

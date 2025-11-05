@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import os
 
 from src.utils.sensor_calculations import calculate_sensor_modules
+from src.utils.constants import ACTIVITY_NAMES, COL_DEVICE_ID, COL_ACTIVITY
 
 
 def detect_outliers_iqr(data):
@@ -44,7 +45,7 @@ def calculate_outlier_density(data, participant_id="todos_participantes", output
         dict: Densidades de outliers por atividade e sensor
     """
     # Filtra dados do pulso direito (device_id = 2)
-    right_wrist_data = data[data[:, 0] == 2]
+    right_wrist_data = data[data[:, COL_DEVICE_ID] == 2]
     
     if len(right_wrist_data) == 0:
         print("Aviso: Nenhum dado encontrado para o pulso direito")
@@ -52,16 +53,7 @@ def calculate_outlier_density(data, participant_id="todos_participantes", output
     
     # Calcula módulos dos sensores
     modules = calculate_sensor_modules(right_wrist_data)
-    activities = right_wrist_data[:, 11]
-    
-    # Mapeamento de atividades
-    activity_names = {
-        1: "Stand", 2: "Sit", 3: "Sit and Talk", 4: "Walk", 5: "Walk and Talk",
-        6: "Climb Stair", 7: "Climb Stair and Talk", 8: "Stand->Sit", 9: "Sit->Stand",
-        10: "Stand->Sit and Talk", 11: "Sit->Stand and Talk", 12: "Stand->Walk",
-        13: "Walk->Stand", 14: "Stand->Climb Stair", 15: "Climb Stair->Walk",
-        16: "Climb Stair and Talk->Walk and Talk"
-    }
+    activities = right_wrist_data[:, COL_ACTIVITY]
     
     # Dicionário para armazenar resultados
     results = {
@@ -98,7 +90,7 @@ def calculate_outlier_density(data, participant_id="todos_participantes", output
         results['acc_densities'].append(densities['acc'])
         results['gyro_densities'].append(densities['gyro'])
         results['mag_densities'].append(densities['mag'])
-        results['activity_names'].append(activity_names.get(activity_id, f"Atividade {activity_id}"))
+        results['activity_names'].append(ACTIVITY_NAMES.get(activity_id, f"Atividade {activity_id}"))
     
     # Estatísticas
     print(f"Densidade média de outliers: Acc={np.mean(results['acc_densities']):.1f}% Gyro={np.mean(results['gyro_densities']):.1f}% Mag={np.mean(results['mag_densities']):.1f}%")

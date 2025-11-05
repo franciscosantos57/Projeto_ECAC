@@ -4,6 +4,7 @@ Implementa janelas deslizantes com overlap para extração de features.
 """
 
 import numpy as np
+from src.utils.constants import COL_DEVICE_ID, COL_ACTIVITY
 
 
 def create_sliding_windows(data, window_size_sec=5, overlap=0.5, sampling_rate=50):
@@ -35,11 +36,11 @@ def create_sliding_windows(data, window_size_sec=5, overlap=0.5, sampling_rate=5
         window_data = data[start_idx:end_idx]
         
         # Verifica se a janela cobre apenas uma atividade
-        activities_in_window = np.unique(window_data[:, 11])
+        activities_in_window = np.unique(window_data[:, COL_ACTIVITY])
         is_single_activity = len(activities_in_window) == 1
         
         # Verifica se a janela usa apenas um dispositivo
-        devices_in_window = np.unique(window_data[:, 0])
+        devices_in_window = np.unique(window_data[:, COL_DEVICE_ID])
         is_single_device = len(devices_in_window) == 1
         
         # Janela válida: uma única atividade e um único dispositivo

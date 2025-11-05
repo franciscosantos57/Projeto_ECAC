@@ -20,6 +20,12 @@ from scipy.fft import fft, fftfreq
 from scipy.signal import welch
 
 from src.utils.sliding_windows import create_sliding_windows, filter_valid_windows
+from src.utils.sensor_calculations import calculate_sensor_modules
+from src.utils.constants import (
+    COL_ACC_X, COL_ACC_Y, COL_ACC_Z,
+    COL_GYRO_X, COL_GYRO_Y, COL_GYRO_Z,
+    COL_MAG_X, COL_MAG_Y, COL_MAG_Z
+)
 
 
 # ============================================================================
@@ -445,30 +451,24 @@ def extract_window_features(window_data, sampling_rate=50):
     """
     features = {}
     
-    # Extrai sinais dos eixos individuais
-    acc_x = window_data[:, 1]
-    acc_y = window_data[:, 2]
-    acc_z = window_data[:, 3]
-    gyro_x = window_data[:, 4]
-    gyro_y = window_data[:, 5]
-    gyro_z = window_data[:, 6]
-    mag_x = window_data[:, 7]
-    mag_y = window_data[:, 8]
-    mag_z = window_data[:, 9]
+    # Extrai sinais dos eixos individuais usando constantes
+    acc_x = window_data[:, COL_ACC_X]
+    acc_y = window_data[:, COL_ACC_Y]
+    acc_z = window_data[:, COL_ACC_Z]
+    gyro_x = window_data[:, COL_GYRO_X]
+    gyro_y = window_data[:, COL_GYRO_Y]
+    gyro_z = window_data[:, COL_GYRO_Z]
+    mag_x = window_data[:, COL_MAG_X]
+    mag_y = window_data[:, COL_MAG_Y]
+    mag_z = window_data[:, COL_MAG_Z]
     
     # ========================================================================
     # CALCULAR MÓDULOS DOS SENSORES
     # ========================================================================
-    acc_module = np.sqrt(acc_x**2 + acc_y**2 + acc_z**2)
-    gyro_module = np.sqrt(gyro_x**2 + gyro_y**2 + gyro_z**2)
-    mag_module = np.sqrt(mag_x**2 + mag_y**2 + mag_z**2)
-    
-    # Dicionário com os módulos
-    sensor_modules = {
-        'acc_module': acc_module,
-        'gyro_module': gyro_module,
-        'mag_module': mag_module
-    }
+    sensor_modules = calculate_sensor_modules(window_data)
+    acc_module = sensor_modules['acc_module']
+    gyro_module = sensor_modules['gyro_module']
+    mag_module = sensor_modules['mag_module']
     
     # ========================================================================
     # FEATURES POR MÓDULO (14 temporais + 4 espectrais = 18 por módulo)

@@ -14,7 +14,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from src.modules.data_loader import load_participant_data, load_all_participants_data
 from src.modules.boxplot_visualization import create_boxplot_visualization
 from src.modules.outlier_density_analysis import calculate_outlier_density, analyze_outlier_patterns
-from src.modules.zscore_outlier_detection import detect_outliers_zscore, create_zscore_plots, compare_methods
+from src.modules.zscore_outlier_detection import create_zscore_plots, compare_methods
 from src.modules.kmeans_outlier_detection import analyze_kmeans_outliers, compare_with_zscore
 from src.modules.dbscan_outlier_detection import analyze_dbscan_outliers, summarize_dbscan_analysis
 from src.modules.statistical_significance import analyze_statistical_significance
@@ -248,7 +248,6 @@ def main():
             all_data,
             eps_values=[0.5, 0.8],
             min_samples_values=[5],
-            sample_size=None,  # Usa padrão 1/50 dos dados
             create_plots=True
         )
         

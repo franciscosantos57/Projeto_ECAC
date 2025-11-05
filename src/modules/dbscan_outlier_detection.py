@@ -11,21 +11,22 @@ from src.utils.sensor_calculations import calculate_sensor_modules, zscore_norma
 from src.utils.plot_3d import create_3d_visualization_dbscan
 
 
-def sample_data(data, sample_size=50000, random_state=42):
+def sample_data(data, sample_fraction=50, random_state=42):
     """
     Amostra aleatória dos dados para processamento mais rápido.
     
     Args:
         data: Array numpy com os dados completos
-        sample_size: Número de amostras a extrair
+        sample_fraction: Fração dos dados a usar (1/sample_fraction)
+                        Default: 50 (usa 1/50 dos dados)
         random_state: Seed para reprodutibilidade
         
     Returns:
         Array numpy com amostra dos dados
     """
     np.random.seed(random_state)
-    n_samples = min(sample_size, len(data))
-    indices = np.random.choice(len(data), size=n_samples, replace=False)
+    sample_size = len(data) // sample_fraction
+    indices = np.random.choice(len(data), size=sample_size, replace=False)
     return data[indices]
 
 
@@ -60,11 +61,7 @@ def detect_outliers_dbscan(data, eps=0.5, min_samples=5, use_modules=True, norma
     # Preparar features (mesmo método do K-Means para consistência)
     if use_modules:
         # Usar módulos dos sensores (3D) - exatamente como K-Means
-        modules_dict = {
-            'acc_module': np.sqrt(data[:, 1]**2 + data[:, 2]**2 + data[:, 3]**2),
-            'gyro_module': np.sqrt(data[:, 4]**2 + data[:, 5]**2 + data[:, 6]**2),
-            'mag_module': np.sqrt(data[:, 7]**2 + data[:, 8]**2 + data[:, 9]**2)
-        }
+        modules_dict = calculate_sensor_modules(data)
         features = np.column_stack([
             modules_dict['acc_module'],
             modules_dict['gyro_module'],
@@ -107,7 +104,7 @@ def detect_outliers_dbscan(data, eps=0.5, min_samples=5, use_modules=True, norma
     }
 
 
-def analyze_dbscan_outliers(data, eps_values, min_samples_values, sample_size=None, create_plots=True):
+def analyze_dbscan_outliers(data, eps_values, min_samples_values, create_plots=True):
     """
     Analisa outliers usando DBSCAN com diferentes combinações de parâmetros.
     Análogo ao analyze_kmeans_outliers do exercício 3.6/3.7.
@@ -116,7 +113,6 @@ def analyze_dbscan_outliers(data, eps_values, min_samples_values, sample_size=No
         data: Array numpy com dados completos
         eps_values: Lista de valores epsilon para testar
         min_samples_values: Lista de valores min_samples para testar
-        sample_size: Tamanho da amostra (None = usar 1/25 dos dados, igual K-Means)
         create_plots: Se True, cria visualizações 3D
         
     Returns:
@@ -128,13 +124,8 @@ def analyze_dbscan_outliers(data, eps_values, min_samples_values, sample_size=No
     
     # Usar 1/50 dos dados para evitar problemas de memória
     # DBSCAN é muito pesado em memória (matriz de distâncias N×N)
-    if sample_size is None:
-        sample_size = len(data) // 50  # 2% do dataset
-    
-    print(f"Amostra: {sample_size:,} pontos (1/50 dos dados - DBSCAN requer menos que K-Means)")
-    np.random.seed(42)
-    indices = np.random.choice(len(data), sample_size, replace=False)
-    data_sample = data[indices]
+    data_sample = sample_data(data, sample_fraction=50, random_state=42)
+    print(f"\nAmostra: {len(data_sample):,} pontos (1/50 de {len(data):,} totais - DBSCAN requer menos que K-Means)")
     
     results = {}
     

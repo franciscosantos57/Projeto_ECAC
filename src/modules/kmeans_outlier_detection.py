@@ -10,6 +10,25 @@ from src.utils.sensor_calculations import calculate_sensor_modules, zscore_norma
 from src.utils.plot_3d import create_3d_visualization_kmeans, create_3d_visualization_kmeans_zoom
 
 
+def sample_data(data, sample_fraction=10, random_state=42):
+    """
+    Amostra aleatória dos dados para processamento mais rápido.
+    
+    Args:
+        data: Array numpy com os dados completos
+        sample_fraction: Fração dos dados a usar (1/sample_fraction)
+                        Default: 10 (usa 1/10 dos dados)
+        random_state: Seed para reprodutibilidade
+        
+    Returns:
+        Array numpy com amostra dos dados
+    """
+    np.random.seed(random_state)
+    sample_size = len(data) // sample_fraction
+    indices = np.random.choice(len(data), size=sample_size, replace=False)
+    return data[indices]
+
+
 def kmeans_clustering(data, n_clusters, max_iter=100, random_state=42):
     """
     EXERCÍCIO 3.6: Implementação do algoritmo K-Means.
@@ -180,11 +199,8 @@ def analyze_kmeans_outliers(data, cluster_range=[3, 5, 7, 10], use_modules=True,
     print("="*60)
     
     # Usar apenas 1/10 dos dados (10% do dataset)
-    sample_size = len(data) // 10
-    np.random.seed(42)
-    indices = np.random.choice(len(data), sample_size, replace=False)
-    data_sample = data[indices]
-    print(f"\nUsando amostra de {sample_size:,} pontos (1/10 de {len(data):,} totais)")
+    data_sample = sample_data(data, sample_fraction=10, random_state=42)
+    print(f"\nUsando amostra de {len(data_sample):,} pontos (1/10 de {len(data):,} totais)")
     
     # Deteta outliers com K-Means
     results = detect_outliers_kmeans(data_sample, n_clusters_list=cluster_range, 

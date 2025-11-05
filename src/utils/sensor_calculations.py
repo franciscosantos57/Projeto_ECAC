@@ -4,6 +4,11 @@ Inclui cálculo de módulos e normalização de dados.
 """
 
 import numpy as np
+from src.utils.constants import (
+    COL_ACC_X, COL_ACC_Y, COL_ACC_Z,
+    COL_GYRO_X, COL_GYRO_Y, COL_GYRO_Z,
+    COL_MAG_X, COL_MAG_Y, COL_MAG_Z
+)
 
 
 def calculate_sensor_modules(data):
@@ -19,10 +24,10 @@ def calculate_sensor_modules(data):
         dict: Dicionário com os módulos calculados:
               {'acc_module': array, 'gyro_module': array, 'mag_module': array}
     """
-    # Extrai componentes dos sensores (índices baseados no dataset)
-    acc_x, acc_y, acc_z = data[:, 1], data[:, 2], data[:, 3]
-    gyro_x, gyro_y, gyro_z = data[:, 4], data[:, 5], data[:, 6]
-    mag_x, mag_y, mag_z = data[:, 7], data[:, 8], data[:, 9]
+    # Extrai componentes dos sensores usando constantes
+    acc_x, acc_y, acc_z = data[:, COL_ACC_X], data[:, COL_ACC_Y], data[:, COL_ACC_Z]
+    gyro_x, gyro_y, gyro_z = data[:, COL_GYRO_X], data[:, COL_GYRO_Y], data[:, COL_GYRO_Z]
+    mag_x, mag_y, mag_z = data[:, COL_MAG_X], data[:, COL_MAG_Y], data[:, COL_MAG_Z]
     
     # Calcula módulos: ||v|| = sqrt(x² + y² + z²)
     acc_module = np.sqrt(acc_x**2 + acc_y**2 + acc_z**2)
