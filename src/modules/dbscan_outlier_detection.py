@@ -98,7 +98,7 @@ def detect_outliers_dbscan(data, eps=0.5, min_samples=5, use_modules=True, norma
         'n_outliers': n_outliers,
         'outlier_percentage': outlier_percentage,
         'features': features_scaled if normalize else features,
-        'normalized_features': features_scaled,  # Sempre retorna features normalizadas
+        'normalized_features': features_scaled,
         'eps': eps,
         'min_samples': min_samples
     }
