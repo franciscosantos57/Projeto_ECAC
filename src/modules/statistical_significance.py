@@ -13,7 +13,7 @@ from scipy.stats import kstest, kruskal, f_oneway
 import os
 
 from src.utils.sensor_calculations import calculate_sensor_modules
-from src.utils.constants import ACTIVITY_NAMES, DEVICE_NAMES, COL_ACTIVITY
+from src.utils.constants import COL_ACTIVITY
 
 
 def test_normality(data, sensor_name, activity_id):

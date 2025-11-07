@@ -13,8 +13,8 @@ Ambos são métodos supervisionados de seleção de features, mas com abordagens
 
 import numpy as np
 from sklearn.preprocessing import StandardScaler
-from src.modules.fisher_score import calculate_fisher_score, rank_features_fisher, print_fisher_ranking
-from src.modules.relieff_selection import calculate_relieff_score, rank_features_relieff, print_relieff_ranking
+from src.modules.fisher_score import calculate_fisher_score, rank_features_fisher
+from src.modules.relieff_selection import calculate_relieff_score, rank_features_relieff
 
 
 def compare_feature_selection_methods(X, y, feature_names, top_k=10, 

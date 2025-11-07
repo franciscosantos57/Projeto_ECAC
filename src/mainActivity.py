@@ -19,7 +19,7 @@ from src.modules.kmeans_outlier_detection import analyze_kmeans_outliers, compar
 from src.modules.dbscan_outlier_detection import analyze_dbscan_outliers, summarize_dbscan_analysis
 from src.modules.statistical_significance import analyze_statistical_significance
 from src.modules.feature_extraction import extract_features_from_windows
-from src.modules.feature_analysis import analyze_feature_set, create_feature_visualizations, save_feature_set
+from src.modules.feature_analysis import analyze_feature_set, save_feature_set
 from src.modules.pca_analysis import (normalize_features_zscore, apply_pca, analyze_variance_explained,
                                       create_variance_plot, print_pca_analysis, print_component_contributions,
                                       example_feature_compression, print_compression_example)
@@ -318,11 +318,6 @@ def main():
         
         # Análise do feature set
         analyze_feature_set(feature_matrix, labels, metadata, feature_names)
-        
-        # Cria visualizações
-        output_dir_42 = "plots/exercicio_4.2_features"
-        create_feature_visualizations(feature_matrix, labels, metadata, feature_names, 
-                                     output_dir=output_dir_42)
         
         # Salva feature set
         save_feature_set(feature_matrix, labels, metadata, feature_names, 

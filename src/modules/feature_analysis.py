@@ -6,10 +6,7 @@ Inclui estatísticas, visualizações e exportação de dados.
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 import os
-
-from src.utils.constants import ACTIVITY_NAMES, DEVICE_NAMES
 
 
 def analyze_feature_set(feature_matrix, labels, metadata, feature_names):
@@ -33,18 +30,6 @@ def analyze_feature_set(feature_matrix, labels, metadata, feature_names):
         print(f"ATENÇÃO: {n_nan} NaN, {n_inf} Inf detectados!")
     else:
         print("Dataset limpo")
-
-
-def create_feature_visualizations(feature_matrix, labels, metadata, feature_names, 
-                                  output_dir="plots/exercicio_4.2_features"):
-    """
-    Cria visualizações do feature set extraído.
-    
-    NOTA: Visualizações desativadas - exercício 4 não requer plots (exceto 4.3 PCA).
-    """
-    print("Visualizações desativadas - apenas análise numérica ativa.")
-    # Gráficos removidos conforme especificação do projeto
-    pass
 
 
 def save_feature_set(feature_matrix, labels, metadata, feature_names, output_dir):

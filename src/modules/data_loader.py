@@ -5,7 +5,6 @@ Carrega dados de participantes individuais ou todos os participantes combinados.
 
 import numpy as np
 import os
-import argparse
 
 
 def load_participant_data(participant_id, dataset_path="dataset"):

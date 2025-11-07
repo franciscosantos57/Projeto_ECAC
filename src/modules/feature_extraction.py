@@ -19,7 +19,7 @@ from scipy import stats
 from scipy.fft import fft, fftfreq
 from scipy.signal import welch
 
-from src.utils.sliding_windows import create_sliding_windows, filter_valid_windows
+from src.utils.sliding_windows import filter_valid_windows
 from src.utils.sensor_calculations import calculate_sensor_modules
 from src.utils.constants import (
     COL_ACC_X, COL_ACC_Y, COL_ACC_Z,
