@@ -4,7 +4,7 @@ Implementa janelas deslizantes com overlap para extração de features.
 """
 
 import numpy as np
-from src.utils.constants import COL_DEVICE_ID, COL_ACTIVITY
+from src.utils.constants import COL_DEVICE_ID, COL_ACTIVITY, COL_PARTICIPANT_ID
 
 
 def create_sliding_windows(data, window_size_sec=5, overlap=0.5, sampling_rate=50):
@@ -13,6 +13,7 @@ def create_sliding_windows(data, window_size_sec=5, overlap=0.5, sampling_rate=5
     
     Args:
         data: Array com dados de sensores [n_samples, n_features]
+              Deve ter 13 colunas se incluir participant_id
         window_size_sec: Tamanho da janela em segundos (padrão: 5s)
         overlap: Overlap entre janelas (0.5 = 50%)
         sampling_rate: Taxa de amostragem em Hz (padrão: 50 Hz)
@@ -20,7 +21,7 @@ def create_sliding_windows(data, window_size_sec=5, overlap=0.5, sampling_rate=5
     Returns:
         list: Lista de dicionários com informação de cada janela:
               {'data': array, 'start_idx': int, 'end_idx': int, 
-               'activity': int, 'device': int, 'is_valid': bool}
+               'activity': int, 'device': int, 'participant_id': int, 'is_valid': bool}
     """
     # Calcula tamanho da janela em amostras
     window_size = int(window_size_sec * sampling_rate)
@@ -28,6 +29,9 @@ def create_sliding_windows(data, window_size_sec=5, overlap=0.5, sampling_rate=5
     
     windows = []
     n_samples = len(data)
+    
+    # Verifica se temos a coluna de participant_id
+    has_participant_id = data.shape[1] > 12
     
     # Itera sobre os dados com sliding window
     start_idx = 0
@@ -43,8 +47,17 @@ def create_sliding_windows(data, window_size_sec=5, overlap=0.5, sampling_rate=5
         devices_in_window = np.unique(window_data[:, COL_DEVICE_ID])
         is_single_device = len(devices_in_window) == 1
         
-        # Janela válida: uma única atividade e um único dispositivo
-        is_valid = is_single_activity and is_single_device
+        # Verifica participant_id se disponível
+        participant_id = -1
+        is_single_participant = True
+        if has_participant_id:
+            participants_in_window = np.unique(window_data[:, COL_PARTICIPANT_ID])
+            is_single_participant = len(participants_in_window) == 1
+            if is_single_participant:
+                participant_id = int(participants_in_window[0])
+        
+        # Janela válida: uma única atividade, um único dispositivo e um único participante
+        is_valid = is_single_activity and is_single_device and is_single_participant
         
         window_info = {
             'data': window_data,
@@ -52,6 +65,7 @@ def create_sliding_windows(data, window_size_sec=5, overlap=0.5, sampling_rate=5
             'end_idx': end_idx,
             'activity': int(activities_in_window[0]) if is_single_activity else -1,
             'device': int(devices_in_window[0]) if is_single_device else -1,
+            'participant_id': participant_id,
             'is_valid': is_valid
         }
         

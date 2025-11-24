@@ -45,3 +45,4 @@ COL_MAG_Y = 8
 COL_MAG_Z = 9
 COL_TIMESTAMP = 10
 COL_ACTIVITY = 11
+COL_PARTICIPANT_ID = 12  # Adicionado quando carregamos todos os participantes

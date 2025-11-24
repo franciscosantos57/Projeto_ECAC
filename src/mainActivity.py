@@ -11,19 +11,31 @@ import time
 # Adiciona o diretório raiz ao path
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-from src.modules.data_loader import load_participant_data, load_all_participants_data
-from src.modules.boxplot_visualization import create_boxplot_visualization
-from src.modules.outlier_density_analysis import calculate_outlier_density, analyze_outlier_patterns
-from src.modules.zscore_outlier_detection import create_zscore_plots, compare_methods
-from src.modules.kmeans_outlier_detection import analyze_kmeans_outliers, compare_with_zscore
-from src.modules.dbscan_outlier_detection import analyze_dbscan_outliers, summarize_dbscan_analysis
-from src.modules.statistical_significance import analyze_statistical_significance
-from src.modules.feature_extraction import extract_features_from_windows
-from src.modules.feature_analysis import analyze_feature_set, save_feature_set
-from src.modules.pca_analysis import (normalize_features_zscore, apply_pca, analyze_variance_explained,
-                                      create_variance_plot, print_pca_analysis, print_component_contributions,
-                                      example_feature_compression, print_compression_example)
-from src.modules.feature_comparison import compare_feature_selection_methods
+# Imports Meta 1
+from src.modules.meta1 import (
+    load_participant_data, load_all_participants_data,
+    create_boxplot_visualization,
+    calculate_outlier_density, analyze_outlier_patterns,
+    create_zscore_plots, compare_methods,
+    analyze_kmeans_outliers, compare_with_zscore,
+    analyze_dbscan_outliers, summarize_dbscan_analysis,
+    analyze_statistical_significance,
+    extract_features_from_windows,
+    analyze_feature_set, save_feature_set, load_feature_set,
+    normalize_features_zscore, apply_pca, analyze_variance_explained,
+    create_variance_plot, print_pca_analysis, print_component_contributions,
+    example_feature_compression, print_compression_example,
+    compare_feature_selection_methods, demonstrate_feature_extraction,
+    analyze_selection_approach
+)
+
+# Imports Meta 2
+from src.modules.meta2 import (
+    analyze_dataset_balance, demonstrate_smote,
+    load_embeddings_dataset
+)
+
+# Imports Utils
 from src.utils.sliding_windows import create_sliding_windows, get_window_statistics
 
 
@@ -48,10 +60,21 @@ def main():
     Executa todos os exercícios do projeto em sequência.
     Inclui carregamento de dados, análise de outliers e visualizações.
     """
-    print("=" * 60)
-    print("PROJETO ECAC - ENGENHARIA DE CARACTERÍSTICAS")
-    print("=" * 60)
+    # CONFIGURAÇÃO: Controlo de extração de features
+    USE_CACHED_FEATURES = True
     
+    print("=" * 60)
+    print("PROJETO ECAC - ENGENHARIA DE CARACTERÍSTICAS PARA APRENDIZAGEM COMPUTACIONAL")
+    print("=" * 60)
+
+    # =====================================================================
+    # META 1: ENGENHARIA DE CARACTERÍSTICAS
+    # =====================================================================
+    
+    print("\n" + "=" * 60)
+    print("META 1 - ENGENHARIA DE CARACTERÍSTICAS")
+    print("=" * 60)
+
     # Dicionário para armazenar tempos de execução
     execution_times = {}
     
@@ -110,7 +133,7 @@ def main():
         print("\nCriando boxplots organizados em grid...")
 
         # Cria pasta para este exercício
-        output_dir_31 = "plots/exercicio_3.1_boxplot"
+        output_dir_31 = "plots/meta1/exercicio_3.1_boxplot"
         os.makedirs(output_dir_31, exist_ok=True)
         create_boxplot_visualization(all_data, "todos_participantes", output_dir=output_dir_31)
         
@@ -130,7 +153,7 @@ def main():
         print("\nCalculando densidades de outliers...")
 
         # Cria pasta para este exercício
-        output_dir_32 = "plots/exercicio_3.2_outlier_density"
+        output_dir_32 = "plots/meta1/exercicio_3.2_outlier_density"
         os.makedirs(output_dir_32, exist_ok=True)
         results = calculate_outlier_density(all_data, "todos_participantes", output_dir=output_dir_32)
         
@@ -167,7 +190,7 @@ def main():
         print("\nGerando gráficos (isto pode demorar alguns segundos)...")
 
         # Cria pasta para este exercício com subpastas por k
-        output_dir_34 = "plots/exercicio_3.4_zscore"
+        output_dir_34 = "plots/meta1/exercicio_3.4_zscore"
         os.makedirs(output_dir_34, exist_ok=True)
         create_zscore_plots(all_data, k_values=[3, 3.5, 4], output_dir=output_dir_34)
         
@@ -183,7 +206,7 @@ def main():
         print("Analisando densidades de outliers obtidas com cada método")
         
         # Cria pasta para este exercício
-        output_dir_35 = "plots/exercicio_3.5_comparacao"
+        output_dir_35 = "plots/meta1/exercicio_3.5_comparacao"
         os.makedirs(output_dir_35, exist_ok=True)
         compare_methods(all_data, output_dir=output_dir_35)
         
@@ -204,7 +227,7 @@ def main():
         print("\nExecutando análise K-Means...")
 
         # Cria pasta para este exercício com subpastas
-        output_dir_36 = "plots/exercicio_3.6_3.7_kmeans"
+        output_dir_36 = "plots/meta1/exercicio_3.6_3.7_kmeans"
         output_dir_normal = os.path.join(output_dir_36, "normal")
         output_dir_zoom = os.path.join(output_dir_36, "zoom")
         os.makedirs(output_dir_normal, exist_ok=True)
@@ -240,7 +263,7 @@ def main():
         print("\nExecutando análise DBSCAN...")
         
         # Cria pasta para este exercício
-        output_dir_371 = "plots/exercicio_3.7.1_dbscan"
+        output_dir_371 = "plots/meta1/exercicio_3.7.1_dbscan"
         os.makedirs(output_dir_371, exist_ok=True)
         
         # Executa análise DBSCAN (análogo ao K-Means)
@@ -279,49 +302,68 @@ def main():
         print("-" * 60)
         start_time = time.time()
         
-        print("Baseado no artigo de Zhang & Sawchuk")
-        print("Implementando sliding windows (5s, overlap 50%)")
-        print("Extraindo features temporais e espectrais")
+        # Tenta carregar features/embeddings de cache
+        cached_data = None
+        if USE_CACHED_FEATURES:
+            cached_data = load_feature_set(output_dir="data/features")
+            if cached_data is not None:
+                print("Features e embeddings carregados de cache (data/features/)")
+                feature_matrix, labels, metadata, feature_names, embeddings = cached_data
+                print(f"Features: {feature_matrix.shape[0]} janelas × {feature_matrix.shape[1]} features")
+                if embeddings is not None:
+                    print(f"Embeddings: {embeddings.shape[0]} janelas × {embeddings.shape[1]} features")
         
-        # Parâmetros de segmentação
-        window_size_sec = 5
-        overlap = 0.5
-        sampling_rate = 50  # Hz (baseado no dataset)
-        
-        print(f"\nParâmetros de segmentação:")
-        print(f"  • Tamanho da janela: {window_size_sec}s")
-        print(f"  • Overlap: {overlap * 100}%")
-        print(f"  • Taxa de amostragem: {sampling_rate} Hz")
-        print(f"  • Amostras por janela: {window_size_sec * sampling_rate}")
-        
-        # Cria sliding windows
-        print(f"\nCriando sliding windows...")
-        windows = create_sliding_windows(all_data, 
-                                        window_size_sec=window_size_sec,
-                                        overlap=overlap,
-                                        sampling_rate=sampling_rate)
-        
-        # Estatísticas das janelas
-        window_stats = get_window_statistics(windows)
-        print(f"\nEstatísticas das janelas:")
-        print(f"  • Total de janelas: {window_stats['total_windows']}")
-        print(f"  • Janelas válidas: {window_stats['valid_windows']}")
-        print(f"  • Janelas descartadas: {window_stats['discarded_windows']} ({window_stats['discard_rate']:.2f}%)")
-        
-        # Extrai features
-        print(f"\nExtraindo features temporais e espectrais...")
-        feature_matrix, labels, metadata, feature_names = extract_features_from_windows(
-            windows, 
-            sampling_rate=sampling_rate,
-            verbose=True
-        )
-        
-        # Análise do feature set
-        analyze_feature_set(feature_matrix, labels, metadata, feature_names)
-        
-        # Salva feature set
-        save_feature_set(feature_matrix, labels, metadata, feature_names, 
-                        output_dir="data/features")
+        # Se não há cache ou USE_CACHED_FEATURES=False, extrai do zero
+        if cached_data is None:
+            print("Baseado no artigo de Zhang & Sawchuk")
+            print("Implementando sliding windows (5s, overlap 50%)")
+            print("Extraindo features temporais e espectrais")
+            
+            # Parâmetros de segmentação
+            window_size_sec = 5
+            overlap = 0.5
+            sampling_rate = 50  # Hz (baseado no dataset)
+            
+            print(f"\nParâmetros de segmentação:")
+            print(f"  • Tamanho da janela: {window_size_sec}s")
+            print(f"  • Overlap: {overlap * 100}%")
+            print(f"  • Taxa de amostragem: {sampling_rate} Hz")
+            print(f"  • Amostras por janela: {window_size_sec * sampling_rate}")
+            
+            # Cria sliding windows
+            print(f"\nCriando sliding windows...")
+            windows = create_sliding_windows(all_data, 
+                                            window_size_sec=window_size_sec,
+                                            overlap=overlap,
+                                            sampling_rate=sampling_rate)
+            
+            # Estatísticas das janelas
+            window_stats = get_window_statistics(windows)
+            print(f"\nEstatísticas das janelas:")
+            print(f"  • Total de janelas: {window_stats['total_windows']}")
+            print(f"  • Janelas válidas: {window_stats['valid_windows']}")
+            print(f"  • Janelas descartadas: {window_stats['discarded_windows']} ({window_stats['discard_rate']:.2f}%)")
+            
+            # Extrai features e embeddings simultaneamente
+            feature_matrix, labels, metadata, feature_names, embeddings = extract_features_from_windows(
+                windows, 
+                sampling_rate=sampling_rate,
+                extract_embeddings=True,
+                device="cpu",
+                batch_size=32
+            )
+            
+            print(f"Features extraidas: {feature_matrix.shape[0]} janelas × {feature_matrix.shape[1]} features")
+            if embeddings is not None:
+                print(f"Embeddings extraídos: {embeddings.shape[0]} janelas × {embeddings.shape[1]} features")
+            
+            # Análise do feature set
+            analyze_feature_set(feature_matrix, labels, metadata, feature_names)
+            
+            # Salva feature set e embeddings
+            save_feature_set(feature_matrix, labels, metadata, feature_names, 
+                            output_dir="data/features", embeddings=embeddings)
+            print(f"Dados guardados: data/features/")
         
         execution_times['Exercício 4.2'] = time.time() - start_time
         print(f"\nTempo de execução: {format_time(execution_times['Exercício 4.2'])}")
@@ -348,7 +390,7 @@ def main():
         print_pca_analysis(variance_info, feature_matrix.shape[1])
         
         # Criar gráfico de variância
-        output_dir_43 = "plots/exercicio_4.3_pca"
+        output_dir_43 = "plots/meta1/exercicio_4.3_pca"
         plot_path = create_variance_plot(pca_full, variance_info, output_dir=output_dir_43)
         print(f"Gráfico salvo: {plot_path}")
         
@@ -390,7 +432,7 @@ def main():
         print("-" * 60)
         start_time = time.time()
         
-        from src.modules.feature_comparison import demonstrate_feature_extraction
+        from src.modules.meta1.feature_comparison import demonstrate_feature_extraction
         
         # Demonstra extração para um instante aleatório
         sample_idx = np.random.randint(0, len(feature_matrix))
@@ -412,7 +454,7 @@ def main():
         print("-" * 60)
         start_time = time.time()
         
-        from src.modules.feature_comparison import analyze_selection_approach
+        from src.modules.meta1.feature_comparison import analyze_selection_approach
         
         # Analisa vantagens e limitações
         approach_analysis = analyze_selection_approach(
@@ -426,16 +468,112 @@ def main():
         print(f"\nTempo de execução: {format_time(execution_times['Exercício 4.6.2'])}")
         print("Exercício 4.6.2 concluído!")
         
+        # =====================================================================
+        # META 2: TRANSFER LEARNING E DATA AUGMENTATION
+        # =====================================================================
+        
+        print("\n" + "=" * 60)
+        print("META 2 - TRANSFER LEARNING E DATA AUGMENTATION")
+        print("=" * 60)
+        
+        # EXERCÍCIO 1.1: Análise de Balanço do Dataset
+        print(f"\nEXERCÍCIO 1.1: ANÁLISE DE BALANÇO DO DATASET")
+        print("-" * 60)
+        start_time = time.time()
+        
+        print("Considerando apenas atividades 1 a 7 (conforme especificação)")
+        
+        # Filtra apenas atividades 1 a 7
+        activity_mask = (labels >= 1) & (labels <= 7)
+        X_filtered = feature_matrix[activity_mask]
+        y_filtered = labels[activity_mask]
+        
+        # Filtra metadata (que é uma lista)
+        metadata_filtered = [metadata[i] for i in range(len(metadata)) if activity_mask[i]]
+        
+        print(f"Amostras antes do filtro: {len(labels)}")
+        print(f"Amostras após filtro (atividades 1-7): {len(y_filtered)}")
+        
+        # Analisa balanço do dataset
+        balance_results = analyze_dataset_balance(X_filtered, y_filtered, verbose=True)
+        
+        execution_times['Exercício 1.1'] = time.time() - start_time
+        print(f"\nTempo de execução: {format_time(execution_times['Exercício 1.1'])}")
+        print("Exercício 1.1 concluído!")
+        
+        # EXERCÍCIO 1.2 e 1.3: SMOTE para Data Augmentation
+        print(f"\nEXERCÍCIO 1.2 e 1.3: SMOTE PARA DATA AUGMENTATION")
+        print("-" * 60)
+        start_time = time.time()
+        
+        print("Gerando 3 amostras sintéticas para Atividade 4 do Participante 3")
+        print("Usando apenas amostras desse participante")
+        print("Visualização 2D com primeiras 2 features")
+        
+        # Filtra dados do participante 3, atividades 1-7
+        participant_id = 3
+        participant_mask = np.array([m['participant_id'] == participant_id for m in metadata_filtered])
+        X_participant = X_filtered[participant_mask]
+        y_participant = y_filtered[participant_mask]
+        
+        print(f"\nAmostras do participante {participant_id}: {len(y_participant)}")
+        
+        # Verifica se há amostras suficientes
+        if len(y_participant) == 0:
+            raise ValueError(f"Nenhuma amostra encontrada para o participante {participant_id}! "
+                           f"Execute novamente o mainActivity.py completo para gerar features "
+                           f"com participant_id incluído.")
+        
+        # Demonstra SMOTE
+        smote_results = demonstrate_smote(
+            X=X_participant,
+            y=y_participant,
+            participant_id=participant_id,
+            target_activity=4,
+            k_samples=3,
+            n_neighbors=5,
+            output_dir="plots/meta2/exercicio_1.3_smote",
+            verbose=True,
+            feature_names=feature_names
+        )
+        
+        execution_times['Exercícios 1.2 e 1.3'] = time.time() - start_time
+        print(f"\nTempo de execução (incluindo gráfico): {format_time(execution_times['Exercícios 1.2 e 1.3'])}")
+        print("Exercícios 1.2 e 1.3 concluídos!")
+        
+        # EXERCÍCIO 2.1: Análise de Embeddings (extraídos no Ex 4.2)
+        print(f"\nEXERCÍCIO 2.1: ANÁLISE DE EMBEDDING FEATURES")
+        print("-" * 60)
+        start_time = time.time()
+        
+        print("\nCarregando embeddings extraídos no Exercício 4.2...")
+        embeddings_loaded, labels_emb, participant_ids_emb, devices_emb = load_embeddings_dataset(
+            embeddings_path="data/features/embeddings_set.npz"
+        )
+        
+        print(f"\nComparação com Features Dataset:")
+        print(f"  Features:  {feature_matrix.shape[0]} segmentos x {feature_matrix.shape[1]} features (handcrafted)")
+        print(f"  Embeddings: {embeddings_loaded.shape[0]} segmentos x {embeddings_loaded.shape[1]} features (transfer learning)")
+        
+        if embeddings_loaded.shape[0] == feature_matrix.shape[0]:
+            print(f"  ✓ ALINHAMENTO PERFEITO")
+        else:
+            print(f"  ✗ DESALINHAMENTO detectado")
+        
+        execution_times['Exercício 2.1'] = time.time() - start_time
+        print(f"\nTempo de execução: {format_time(execution_times['Exercício 2.1'])}")
+        print("Exercício 2.1 concluído!")
+        
         # Resumo de tempos de execução
         print(f"\n{'=' * 60}")
         print(f"RESUMO DE TEMPOS DE EXECUÇÃO")
         print(f"{'=' * 60}")
         total_time = 0
         for exercise, exec_time in execution_times.items():
-            print(f"{exercise:30s}: {format_time(exec_time)}")
+            print(f"{exercise:35s}: {format_time(exec_time)}")
             total_time += exec_time
         print(f"{'=' * 60}")
-        print(f"{'TEMPO TOTAL':30s}: {format_time(total_time)}")
+        print(f"{'TEMPO TOTAL':35s}: {format_time(total_time)}")
         print(f"{'=' * 60}")
         
         print(f"\nPROJETO CONCLUÍDO!")
