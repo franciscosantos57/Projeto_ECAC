@@ -25,18 +25,26 @@ from src.modules.meta1 import (
     normalize_features_zscore, apply_pca, analyze_variance_explained,
     create_variance_plot, print_pca_analysis, print_component_contributions,
     example_feature_compression, print_compression_example,
-    compare_feature_selection_methods, demonstrate_feature_extraction,
-    analyze_selection_approach
+    compare_feature_selection_methods
 )
 
 # Imports Meta 2
 from src.modules.meta2 import (
     analyze_dataset_balance, demonstrate_smote,
-    load_embeddings_dataset
+    load_embeddings_dataset,
+    split_within_subject, split_between_subject, compare_splitting_strategies,
+    prepare_all_scenarios,
+    train_knn, predict_knn,
+    calculate_metrics, print_metrics,
+    evaluate_all_scenarios, compare_confusion_matrices,
+    perform_multiple_splits, evaluate_with_multiple_splits,
+    hypothesis_testing, print_summary_table
 )
 
 # Imports Utils
-from src.utils.sliding_windows import create_sliding_windows, get_window_statistics
+from src.utils.sliding_windows import (
+    create_sliding_windows, get_window_statistics
+)
 
 
 def format_time(seconds):
@@ -563,6 +571,344 @@ def main():
         execution_times['Exercício 2.1'] = time.time() - start_time
         print(f"\nTempo de execução: {format_time(execution_times['Exercício 2.1'])}")
         print("Exercício 2.1 concluído!")
+        
+        # EXERCÍCIO 3: Data Splitting Strategies
+        print(f"\nEXERCÍCIO 3: DATA SPLITTING STRATEGIES")
+        print("-" * 60)
+        start_time = time.time()
+        
+        print("Aplicando splits TVT (60-20-20%) em FEATURES e EMBEDDINGS")
+        print("Comparando estratégias within-subject vs between-subject")
+        
+        # Extrai participant_ids do metadata
+        participant_ids = np.array([m['participant_id'] for m in metadata])
+        
+        # EXERCÍCIO 3.1: Within-Subject Split (FEATURES)
+        print(f"\nEXERCÍCIO 3.1: WITHIN-SUBJECT SPLIT")
+        print("-" * 60)
+        print("Split 60-20-20% dentro de cada participante")
+        
+        features_within = split_within_subject(
+            X=feature_matrix,
+            y=labels,
+            participant_ids=participant_ids,
+            train_size=0.6,
+            val_size=0.2,
+            test_size=0.2,
+            random_state=42
+        )
+        
+        embeddings_within = split_within_subject(
+            X=embeddings,
+            y=labels,
+            participant_ids=participant_ids,
+            train_size=0.6,
+            val_size=0.2,
+            test_size=0.2,
+            random_state=42
+        )
+        
+        print(f"✓ Features split: Train={len(features_within['y_train'])}, "
+              f"Val={len(features_within['y_val'])}, Test={len(features_within['y_test'])}")
+        print(f"✓ Embeddings split: Train={len(embeddings_within['y_train'])}, "
+              f"Val={len(embeddings_within['y_val'])}, Test={len(embeddings_within['y_test'])}")
+        
+        # EXERCÍCIO 3.2: Between-Subject Split (FEATURES)
+        print(f"\nEXERCÍCIO 3.2: BETWEEN-SUBJECT SPLIT")
+        print("-" * 60)
+        print("Split 9-3-3 participantes distintos")
+        
+        features_between = split_between_subject(
+            X=feature_matrix,
+            y=labels,
+            participant_ids=participant_ids,
+            train_size=9,
+            val_size=3,
+            test_size=3,
+            random_state=42
+        )
+        
+        embeddings_between = split_between_subject(
+            X=embeddings,
+            y=labels,
+            participant_ids=participant_ids,
+            train_size=9,
+            val_size=3,
+            test_size=3,
+            random_state=42
+        )
+        
+        print(f"✓ Features split: Train={len(features_between['y_train'])}, "
+              f"Val={len(features_between['y_val'])}, Test={len(features_between['y_test'])}")
+        print(f"✓ Embeddings split: Train={len(embeddings_between['y_train'])}, "
+              f"Val={len(embeddings_between['y_val'])}, Test={len(embeddings_between['y_test'])}")
+        
+        # EXERCÍCIO 3.3: Comparação e Discussão
+        print(f"\nEXERCÍCIO 3.3: COMPARAÇÃO E DISCUSSÃO")
+        print("-" * 60)
+        
+        compare_splitting_strategies(features_within, features_between, verbose=True)
+        
+        execution_times['Exercícios 3.1, 3.2 e 3.3'] = time.time() - start_time
+        print(f"\nTempo de execução: {format_time(execution_times['Exercícios 3.1, 3.2 e 3.3'])}")
+        print("Exercícios 3.1, 3.2 e 3.3 concluídos!")
+        
+        # EXERCÍCIO 3.4: Preparação de Cenários (All, PCA, ReliefF)
+        print(f"\nEXERCÍCIO 3.4: PREPARAÇÃO DE CENÁRIOS DE DATASETS")
+        print("-" * 60)
+        start_time = time.time()
+        
+        print("Preparando 3 cenários para FEATURES e EMBEDDINGS:")
+        print("  a) All features/embeddings (normalizado)")
+        print("  b) PCA-reduced (90% variância)")
+        print("  c) ReliefF-selected (top 15 features)")
+        print("\nNOTA: PCA e ReliefF são calculados APENAS com dados de treino")
+        
+        # Prepara cenários para Features (within-subject)
+        print("\n1. WITHIN-SUBJECT SPLIT:")
+        scenarios_features_within = prepare_all_scenarios(
+            split_data=features_within,
+            variance_threshold=0.90,
+            top_k_features=15,
+            verbose=True
+        )
+        
+        scenarios_embeddings_within = prepare_all_scenarios(
+            split_data=embeddings_within,
+            variance_threshold=0.90,
+            top_k_features=15,
+            verbose=True
+        )
+        
+        # Prepara cenários para Features (between-subject)
+        print("\n2. BETWEEN-SUBJECT SPLIT:")
+        scenarios_features_between = prepare_all_scenarios(
+            split_data=features_between,
+            variance_threshold=0.90,
+            top_k_features=15,
+            verbose=True
+        )
+        
+        scenarios_embeddings_between = prepare_all_scenarios(
+            split_data=embeddings_between,
+            variance_threshold=0.90,
+            top_k_features=15,
+            verbose=True
+        )
+        
+        execution_times['Exercício 3.4'] = time.time() - start_time
+        print(f"\nTempo de execução: {format_time(execution_times['Exercício 3.4'])}")
+        print("Exercício 3.4 concluído!")
+        
+        # EXERCÍCIO 4.1 e 4.2: k-NN Classifier e Métricas de Classificação
+        print(f"\nEXERCÍCIO 4.1 e 4.2: k-NN CLASSIFIER E MÉTRICAS DE CLASSIFICAÇÃO")
+        print("-" * 60)
+        start_time = time.time()
+        
+        print("Implementação própria de k-NN (Exercício 4.1)")
+        print("Função de métricas de classificação (Exercício 4.2)")
+        print("Testando com k ímpares de 1 a 20")
+        
+        # Seleciona um cenário para demonstração (Features, Within-Subject, All features)
+        print("\nCenário de teste: Features (Within-Subject, All features)")
+        scenario = scenarios_features_within['all']
+        
+        X_train = scenario['X_train']
+        y_train = scenario['y_train']
+        X_val = scenario['X_val']
+        y_val = scenario['y_val']
+        X_test = scenario['X_test']
+        y_test = scenario['y_test']
+        
+        print(f"Train: {X_train.shape[0]} amostras, {X_train.shape[1]} features")
+        print(f"Val:   {X_val.shape[0]} amostras")
+        print(f"Test:  {X_test.shape[0]} amostras")
+        
+        # Treinar e avaliar k-NN com diferentes valores de k (ímpares de 1 a 20)
+        k_values = list(range(1, 21, 2))  # [1, 3, 5, 7, 9, 11, 13, 15, 17, 19]
+        
+        print(f"\n{'─' * 80}")
+        print(f"{'k':<5} {'Accuracy':<12} {'Precision':<12} {'Recall':<12} {'F1-Score':<12}")
+        print(f"{'─' * 80}")
+        
+        results = []
+        for k in k_values:
+            # Treina modelo
+            model = train_knn(X_train, y_train, k=k, verbose=False)
+            
+            # Prediz no conjunto de validação
+            y_pred_val = predict_knn(model, X_val, verbose=False)
+            
+            # Calcula métricas customizadas (sem imprimir)
+            metrics = calculate_metrics(y_true=y_val, y_pred=y_pred_val, average='macro', verbose=False)
+            
+            # Armazena resultado (incluindo predições e métricas completas)
+            results.append({
+                'k': k,
+                'y_pred': y_pred_val,
+                'metrics': metrics,
+                'accuracy': metrics['accuracy'],
+                'precision': metrics['precision'],
+                'recall': metrics['recall'],
+                'f1_score': metrics['f1_score']
+            })
+            
+            # Imprime linha da tabela
+            print(f"{k:<5} {metrics['accuracy']:<12.4f} {metrics['precision']:<12.4f} "
+                  f"{metrics['recall']:<12.4f} {metrics['f1_score']:<12.4f}")
+        
+        print(f"{'─' * 80}")
+        
+        # Demonstração da função de métricas com output completo (exemplo com k=5)
+        print(f"\n{'=' * 80}")
+        print("DEMONSTRAÇÃO DA FUNÇÃO calculate_metrics() - Exemplo com k=5")
+        print(f"{'=' * 80}")
+        
+        # Usa resultado já calculado para k=5 (índice 2 na lista: [1, 3, 5, ...])
+        k5_result = results[2]  # k=5 é o 3º elemento (índice 2)
+        print(f"\nk-NN (k={k5_result['k']}) - Validation Set")
+        print_metrics(k5_result['metrics'])
+        
+        execution_times['Exercícios 4.1 e 4.2'] = time.time() - start_time
+        print(f"\nTempo de execução: {format_time(execution_times['Exercícios 4.1 e 4.2'])}")
+        print("Exercícios 4.1 e 4.2 concluídos!")
+        
+        # EXERCÍCIO 5: Evaluation - Hyperparameter Tuning e Análise
+        print(f"\nEXERCÍCIO 5.1 e 5.2: HYPERPARAMETER TUNING E ANÁLISE")
+        print("-" * 60)
+        start_time = time.time()
+        
+        print("Avaliando 2 splits × 3 cenários × 2 datasets = 12 configurações")
+        
+        # Define valores de k para tuning e modo (sklearn ou próprio)
+        k_values_tuning = list(range(1, 21, 2))
+        use_sklearn_knn = True
+        
+        # Features - Within-Subject
+        results_features_within = evaluate_all_scenarios(
+            scenarios_features_within,
+            train_knn,
+            calculate_metrics,
+            k_values_tuning,
+            use_sklearn=use_sklearn_knn,
+            verbose=False
+        )
+        
+        # Features - Between-Subject
+        results_features_between = evaluate_all_scenarios(
+            scenarios_features_between,
+            train_knn,
+            calculate_metrics,
+            k_values_tuning,
+            use_sklearn=use_sklearn_knn,
+            verbose=False
+        )
+        
+        # Embeddings - Within-Subject
+        results_embeddings_within = evaluate_all_scenarios(
+            scenarios_embeddings_within,
+            train_knn,
+            calculate_metrics,
+            k_values_tuning,
+            use_sklearn=use_sklearn_knn,
+            verbose=False
+        )
+        
+        # Embeddings - Between-Subject
+        results_embeddings_between = evaluate_all_scenarios(
+            scenarios_embeddings_between,
+            train_knn,
+            calculate_metrics,
+            k_values_tuning,
+            use_sklearn=use_sklearn_knn,
+            verbose=False
+        )
+        
+        # Tabelas resumo
+        print_summary_table(results_features_within, results_features_between, 'features')
+        print_summary_table(results_embeddings_within, results_embeddings_between, 'embeddings')
+        
+        # Análise de matrizes de confusão
+        print("\nFEATURES - Within-Subject:")
+        compare_confusion_matrices(results_features_within, ['all', 'pca', 'relieff'], verbose=True)
+        
+        print("\nEMBEDDINGS - Within-Subject:")
+        compare_confusion_matrices(results_embeddings_within, ['all', 'pca', 'relieff'], verbose=True)
+        
+        execution_times['Exercícios 5.1 e 5.2'] = time.time() - start_time
+        print(f"\nTempo de execução: {format_time(execution_times['Exercícios 5.1 e 5.2'])}")
+        print("Exercícios 5.1 e 5.2 concluídos!")
+        
+        # EXERCÍCIO 5.3: Testes de Hipótese
+        print(f"\nEXERCÍCIO 5.3: TESTES DE HIPÓTESE")
+        print("-" * 60)
+        start_time = time.time()
+        
+        print("Repetindo splits 10 vezes para distribuições de performance...")
+        n_iterations = 10
+        
+        # Features - Within (usa melhor k encontrado para 'all')
+        best_k_features_within = results_features_within['all']['best_k']
+        print(f"\nFEATURES - Within-Subject (k={best_k_features_within}):")
+        
+        splits_features_within = perform_multiple_splits(
+            split_within_subject,
+            feature_matrix,
+            labels,
+            participant_ids,
+            n_iterations,
+            'within',
+            train_size=0.6,
+            val_size=0.2,
+            test_size=0.2
+        )
+        
+        dist_features_within = evaluate_with_multiple_splits(
+            splits_features_within,
+            prepare_all_scenarios,
+            train_knn,
+            calculate_metrics,
+            best_k_features_within,
+            use_sklearn=use_sklearn_knn
+        )
+        
+        hyp_features_within = hypothesis_testing(dist_features_within, alpha=0.05, verbose=True)
+        
+        # Embeddings - Within (usa melhor k encontrado para 'all')
+        best_k_embeddings_within = results_embeddings_within['all']['best_k']
+        print(f"\nEMBEDDINGS - Within-Subject (k={best_k_embeddings_within}):")
+        
+        splits_embeddings_within = perform_multiple_splits(
+            split_within_subject,
+            embeddings,
+            labels,
+            participant_ids,
+            n_iterations,
+            'within',
+            train_size=0.6,
+            val_size=0.2,
+            test_size=0.2
+        )
+        
+        dist_embeddings_within = evaluate_with_multiple_splits(
+            splits_embeddings_within,
+            prepare_all_scenarios,
+            train_knn,
+            calculate_metrics,
+            best_k_embeddings_within,
+            use_sklearn=use_sklearn_knn
+        )
+        
+        hyp_embeddings_within = hypothesis_testing(dist_embeddings_within, alpha=0.05, verbose=True)
+        
+        print("\nJustificação: Teste de Wilcoxon (paired, não-paramétrico)")
+        print("  • Amostras emparelhadas (mesmo split em cenários diferentes)")
+        print("  • Não assume normalidade da distribuição")
+        print("  • Apropriado para comparar performance de modelos")
+        
+        execution_times['Exercício 5.3'] = time.time() - start_time
+        print(f"\nTempo de execução: {format_time(execution_times['Exercício 5.3'])}")
+        print("Exercício 5.3 concluído!")
         
         # Resumo de tempos de execução
         print(f"\n{'=' * 60}")

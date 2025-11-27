@@ -93,9 +93,9 @@ def compare_rankings(fisher_ranking, relieff_ranking, top_k=10):
         Número de features a comparar
     """
     print(f"\nComparação Fisher vs ReliefF:")
-    print("-" * 80)
+    print("-" * 89)
     print(f"{'#':<3} {'Fisher Feature':<30} {'Score':>8}  |  {'ReliefF Feature':<30} {'Score':>8}")
-    print("-" * 80)
+    print("-" * 89)
     
     for i in range(top_k):
         fisher_feat, fisher_score, _ = fisher_ranking[i]
@@ -106,7 +106,7 @@ def compare_rankings(fisher_ranking, relieff_ranking, top_k=10):
         
         print(f"{i+1:<3} {fisher_feat:<30} {fisher_score:>8.2f}  |  {relieff_feat:<30} {relieff_score:>8.4f}{marker}")
     
-    print("-" * 80)
+    print("-" * 89)
     print("★ = Feature também aparece no top-10 do outro método")
 
 
