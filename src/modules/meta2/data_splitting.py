@@ -158,9 +158,6 @@ def compare_splitting_strategies(within_split, between_split, verbose=True):
         dict com estatísticas comparativas
     """
     if verbose:
-        print("\n" + "=" * 60)
-        print("COMPARAÇÃO: WITHIN-SUBJECT vs BETWEEN-SUBJECT")
-        print("=" * 60)
         
         # Within-subject
         print("\n1. WITHIN-SUBJECT (dados do mesmo participante em todos os conjuntos)")
@@ -194,7 +191,7 @@ def compare_splitting_strategies(within_split, between_split, verbose=True):
         print("  • Contras: menos dados por conjunto e maior variância nas métricas entre splits.")
         
         print("\nConclusão: A melhor estratégia parece ser a abrodagem Between-Subject, uma vez que reflete")
-        print("         melhor a capacidade de generalização para novos participantes, crucial em aplicações reais.")
+        print("           melhor a capacidade de generalização para novos participantes, crucial em aplicações reais.")
         print("=" * 60)
     
     return {

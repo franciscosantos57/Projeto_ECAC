@@ -349,6 +349,7 @@ def create_3d_visualization_dbscan(data, result, title_suffix=""):
     ylabel = 'Módulo Giroscópio (Z-Score)'
     zlabel = 'Módulo Magnetómetro (Z-Score)'
     
+    plt.close('all')  # Fecha figuras anteriores
     fig = plt.figure(figsize=(20, 16))
     
     # Cores

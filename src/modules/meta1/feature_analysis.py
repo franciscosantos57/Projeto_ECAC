@@ -74,7 +74,7 @@ def save_feature_set(feature_matrix, labels, metadata, feature_names, output_dir
     Guarda feature set e embeddings (se disponíveis) em formato NumPy.
     
     Args:
-        feature_matrix: Array [n_windows, 66] com features handcrafted
+        feature_matrix: Array [n_windows, n_features] com features handcrafted
         labels: Array [n_windows] com IDs das atividades
         metadata: Lista de dicts com info de cada janela
         feature_names: Lista com nomes das features

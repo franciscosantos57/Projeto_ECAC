@@ -9,17 +9,21 @@ from collections import Counter
 
 class KNNClassifier:
     """
-    Implementação simples de k-Nearest Neighbors (k-NN).
+    Implementação k-NN com votação ponderada e distância de Manhattan.
     """
     
-    def __init__(self, k=3):
+    def __init__(self, k=3, metric='manhattan', weights='distance'):
         """
         Inicializa o classificador k-NN.
         
         Args:
-            k: Número de vizinhos mais próximos a considerar
+            k: Número de vizinhos mais próximos
+            metric: 'manhattan' ou 'euclidean'
+            weights: 'uniform' ou 'distance' (inverso da distância)
         """
         self.k = k
+        self.metric = metric
+        self.weights = weights
         self.X_train = None
         self.y_train = None
     
@@ -48,16 +52,30 @@ class KNNClassifier:
         predictions = []
         
         for test_sample in X_test:
-            # Calcula distâncias euclidianas para todos os pontos de treino
-            distances = np.sqrt(np.sum((self.X_train - test_sample) ** 2, axis=1))
+            # Calcula distâncias (Manhattan ou Euclidiana)
+            if self.metric == 'manhattan':
+                distances = np.sum(np.abs(self.X_train - test_sample), axis=1)
+            else:  # euclidean
+                distances = np.sqrt(np.sum((self.X_train - test_sample) ** 2, axis=1))
             
             # Encontra os k vizinhos mais próximos
             k_indices = np.argsort(distances)[:self.k]
             k_nearest_labels = self.y_train[k_indices]
+            k_distances = distances[k_indices]
             
-            # Voto por maioria
-            most_common = Counter(k_nearest_labels).most_common(1)
-            predictions.append(most_common[0][0])
+            # Votação (uniforme ou ponderada)
+            if self.weights == 'distance':
+                # Peso = 1 / (distance + epsilon) para evitar divisão por zero
+                weights = 1.0 / (k_distances + 1e-10)
+                # Voto ponderado: soma pesos por classe
+                weighted_votes = {}
+                for label, weight in zip(k_nearest_labels, weights):
+                    weighted_votes[label] = weighted_votes.get(label, 0) + weight
+                prediction = max(weighted_votes, key=weighted_votes.get)
+            else:  # uniform
+                prediction = Counter(k_nearest_labels).most_common(1)[0][0]
+            
+            predictions.append(prediction)
         
         return np.array(predictions)
     
@@ -93,7 +111,8 @@ def train_knn(X_train, y_train, k=3, verbose=True):
         print(f"Treinando k-NN com k={k}...")
         print(f"  Dados de treino: {X_train.shape[0]} amostras, {X_train.shape[1]} features")
     
-    model = KNNClassifier(k=k)
+    # Usa Manhattan distance e weighted voting por padrão (melhor performance)
+    model = KNNClassifier(k=k, metric='manhattan', weights='distance')
     model.fit(X_train, y_train)
     
     if verbose:

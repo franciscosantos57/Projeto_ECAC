@@ -11,7 +11,7 @@ Features implementadas:
 - Features adicionais do paper (12): AI, VI (Movement Intensity), SMA, 
   EVA1/EVA2/EVA3 (eigenvalues), CAGH, AVH, AVG, ARATG, AAE, ARE
   
-Total: 3 módulos × 18 features + 12 multi-sensor = 66 features
+Total: 9 eixos × 18 features + 12 multi-sensor = 174 features
 
 INTEGRAÇÃO META 2 - EXERCÍCIO 2.1:
 Durante a extração de features, também extrai embeddings (512-dim) usando
@@ -24,10 +24,8 @@ import torch
 from scipy import stats
 from scipy.fft import fft, fftfreq
 from scipy.signal import welch
-from tqdm import tqdm
 
 from src.utils.sliding_windows import filter_valid_windows
-from src.utils.sensor_calculations import calculate_sensor_modules
 from src.utils.embeddings_extractor import load_model, resample_to_30hz_5s
 from src.utils.constants import (
     COL_ACC_X, COL_ACC_Y, COL_ACC_Z,
@@ -432,13 +430,7 @@ def extract_window_features(window_data, sampling_rate=50):
     """
     Extrai features completas de uma janela de dados.
     
-    ABORDAGEM OTIMIZADA: Em vez de extrair features de cada eixo individual
-    (acc_x, acc_y, acc_z), extraímos features dos MÓDULOS dos sensores:
-    - acc_module = sqrt(acc_x² + acc_y² + acc_z²)
-    - gyro_module = sqrt(gyro_x² + gyro_y² + gyro_z²)
-    - mag_module = sqrt(mag_x² + mag_y² + mag_z²)
-    
-    Para cada módulo, extrai:
+    Para cada eixo individual dos 3 sensores (9 eixos no total), extrai:
     - 14 features temporais (Tabela 1)
     - 4 features espectrais
     
@@ -448,20 +440,19 @@ def extract_window_features(window_data, sampling_rate=50):
     - EVA1, EVA2, EVA3: eigenvalues
     - CAGH, AVH, AVG, ARATG, AAE, ARE
     
-    Total: 3 módulos × 18 features + 12 multi-sensor = 54 + 12 = 66 features
+    Total: 9 eixos × 18 features + 12 multi-sensor = 162 + 12 = 174 features
     
-    VANTAGENS:
-    - Menos redundância (3× menos features)
-    - Módulo representa magnitude/intensidade total
-    - Mais interpretável fisicamente
-    - Consistente com análises de outliers anteriores
+    EIXOS EXTRAÍDOS:
+    - Acelerómetro: acc_x, acc_y, acc_z
+    - Giroscópio: gyro_x, gyro_y, gyro_z
+    - Magnetómetro: mag_x, mag_y, mag_z
     
     Args:
         window_data: Array [n_samples, 12] de uma janela
         sampling_rate: Taxa de amostragem em Hz
     
     Returns:
-        dict: Features extraídas organizadas por módulo e tipo
+        dict: Features extraídas organizadas por eixo e tipo
     """
     features = {}
     
@@ -477,26 +468,24 @@ def extract_window_features(window_data, sampling_rate=50):
     mag_z = window_data[:, COL_MAG_Z]
     
     # ========================================================================
-    # CALCULAR MÓDULOS DOS SENSORES
+    # FEATURES POR EIXO (14 temporais + 4 espectrais = 18 por eixo)
     # ========================================================================
-    sensor_modules = calculate_sensor_modules(window_data)
-    acc_module = sensor_modules['acc_module']
-    gyro_module = sensor_modules['gyro_module']
-    mag_module = sensor_modules['mag_module']
+    sensor_axes = {
+        'acc_x': acc_x, 'acc_y': acc_y, 'acc_z': acc_z,
+        'gyro_x': gyro_x, 'gyro_y': gyro_y, 'gyro_z': gyro_z,
+        'mag_x': mag_x, 'mag_y': mag_y, 'mag_z': mag_z
+    }
     
-    # ========================================================================
-    # FEATURES POR MÓDULO (14 temporais + 4 espectrais = 18 por módulo)
-    # ========================================================================
-    for module_name, signal in sensor_modules.items():
+    for axis_name, signal in sensor_axes.items():
         # Features temporais (14)
         temporal = extract_temporal_features(signal)
         for feat_name, feat_value in temporal.items():
-            features[f"{module_name}_{feat_name}"] = feat_value
+            features[f"{axis_name}_{feat_name}"] = feat_value
         
         # Features espectrais (4)
         spectral = extract_spectral_features(signal, sampling_rate)
         for feat_name, feat_value in spectral.items():
-            features[f"{module_name}_{feat_name}"] = feat_value
+            features[f"{axis_name}_{feat_name}"] = feat_value
     
     # ========================================================================
     # FEATURES MULTI-SENSOR (11 features adicionais)
@@ -551,7 +540,7 @@ def extract_features_from_windows(windows, sampling_rate=50,
     
     Returns:
         tuple: (feature_matrix, labels, metadata, feature_names, embeddings)
-            - feature_matrix: Array [n_windows, 66] features handcrafted
+            - feature_matrix: Array [n_windows, 174] features handcrafted
             - labels: Array [n_windows] com IDs das atividades
             - metadata: Lista de dicts com info de cada janela
             - feature_names: Lista com nomes das features
@@ -663,12 +652,14 @@ def get_feature_names():
     """
     Retorna lista de nomes de todas as features extraídas.
     
-    Total: 3 módulos × 18 features (14 temp + 4 spec) + 12 multi-sensor = 66 features
+    Total: 9 eixos × 18 features (14 temp + 4 spec) + 12 multi-sensor = 174 features
     
     Returns:
         list: Nomes das features na ordem de extração
     """
-    module_names = ['acc_module', 'gyro_module', 'mag_module']
+    axis_names = ['acc_x', 'acc_y', 'acc_z', 
+                  'gyro_x', 'gyro_y', 'gyro_z',
+                  'mag_x', 'mag_y', 'mag_z']
     
     # 14 features temporais (Tabela 1)
     temporal_features = ['mean', 'median', 'std', 'variance', 'min', 'max', 
@@ -680,12 +671,12 @@ def get_feature_names():
     
     feature_names = []
     
-    # Features por módulo (3 × 18 = 54)
-    for module in module_names:
+    # Features por eixo (9 × 18 = 162)
+    for axis in axis_names:
         for temp_feat in temporal_features:
-            feature_names.append(f"{module}_{temp_feat}")
+            feature_names.append(f"{axis}_{temp_feat}")
         for spec_feat in spectral_features:
-            feature_names.append(f"{module}_{spec_feat}")
+            feature_names.append(f"{axis}_{spec_feat}")
     
     # Features multi-sensor (12)
     multi_sensor_features = ['ai', 'vi', 'sma', 'eva1', 'eva2', 'eva3', 

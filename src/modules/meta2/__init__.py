@@ -17,6 +17,10 @@ from .data_augmentation import (
     demonstrate_smote
 )
 
+from .smote_balancer import (
+    balance_dataset_smote
+)
+
 from .embedding_extraction import (
     load_embeddings_dataset
 )
@@ -47,17 +51,30 @@ from .classification_metrics import (
 from .model_evaluation import (
     select_best_k,
     train_and_evaluate,
-    evaluate_all_scenarios,
-    compare_confusion_matrices,
     perform_multiple_splits,
     evaluate_with_multiple_splits,
     hypothesis_testing,
-    print_summary_table
+    print_summary_table,
+    plot_average_confusion_matrix
+)
+
+from .hypothesis_visualization import (
+    plot_hypothesis_tests,
+    find_best_model
+)
+
+from .deployment import (
+    run_classification
+)
+
+from .deployment_evaluation import (
+    evaluate_deployment_accuracy
 )
 
 __all__ = [
     'analyze_dataset_balance',
     'demonstrate_smote',
+    'balance_dataset_smote',
     'load_embeddings_dataset',
     'split_within_subject',
     'split_between_subject',
@@ -73,10 +90,14 @@ __all__ = [
     'evaluate_classification',
     'select_best_k',
     'train_and_evaluate',
-    'evaluate_all_scenarios',
     'compare_confusion_matrices',
     'perform_multiple_splits',
     'evaluate_with_multiple_splits',
     'hypothesis_testing',
-    'print_summary_table'
+    'print_summary_table',
+    'plot_confusion_matrix',
+    'plot_hypothesis_tests',
+    'find_best_model',
+    'run_classification',
+    'evaluate_deployment_accuracy'
 ]

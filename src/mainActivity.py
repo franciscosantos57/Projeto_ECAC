@@ -7,6 +7,8 @@ import sys
 import os
 import numpy as np
 import time
+from tqdm import tqdm
+
 
 # Adiciona o diretório raiz ao path
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
@@ -30,20 +32,22 @@ from src.modules.meta1 import (
 
 # Imports Meta 2
 from src.modules.meta2 import (
-    analyze_dataset_balance, demonstrate_smote,
-    load_embeddings_dataset,
+    analyze_dataset_balance, demonstrate_smote, balance_dataset_smote,
     split_within_subject, split_between_subject, compare_splitting_strategies,
     prepare_all_scenarios,
     train_knn, predict_knn,
     calculate_metrics, print_metrics,
-    evaluate_all_scenarios, compare_confusion_matrices,
     perform_multiple_splits, evaluate_with_multiple_splits,
-    hypothesis_testing, print_summary_table
+    print_summary_table, plot_average_confusion_matrix,
+    plot_hypothesis_tests, find_best_model,
+    run_classification, evaluate_deployment_accuracy
 )
 
 # Imports Utils
-from src.utils.sliding_windows import (
-    create_sliding_windows, get_window_statistics
+from src.utils import (
+    create_sliding_windows, get_window_statistics,
+    cache_exists, load_results, save_results,
+    ModelLogger
 )
 
 
@@ -68,8 +72,9 @@ def main():
     Executa todos os exercícios do projeto em sequência.
     Inclui carregamento de dados, análise de outliers e visualizações.
     """
-    # CONFIGURAÇÃO: Controlo de extração de features
-    USE_CACHED_FEATURES = True
+    # ========== CONFIGURAÇÕES ==========
+    USE_CACHED_FEATURES = True   # Se True, carrega features do cache; se False, recalcula
+    USE_SKLEARN_KNN = True       # Se True, usa sklearn k-NN; se False, usa implementação própria
     
     print("=" * 60)
     print("PROJETO ECAC - ENGENHARIA DE CARACTERÍSTICAS PARA APRENDIZAGEM COMPUTACIONAL")
@@ -100,14 +105,14 @@ def main():
         
         # Mostra estrutura dos dados
         print(f"\nMatriz de dados do participante {participant_id}:")
-        print("-" * 80)
+        print("-" * 105)
         print("Formato: [Dev_ID, Acc_X, Acc_Y, Acc_Z, Gyro_X, Gyro_Y, Gyro_Z, Mag_X, Mag_Y, Mag_Z, Timestamp, Activity]")
-        print("-" * 80)
+        print("-" * 105)
         
         # Mostrar primeiras 10 linhas da matriz com formatação melhorada
         print("Primeiras 10 amostras:")
         print(f"{'#':<3} {'Dev':<3} {'Acc_X':<8} {'Acc_Y':<8} {'Acc_Z':<8} {'Gyro_X':<8} {'Gyro_Y':<8} {'Gyro_Z':<8} {'Mag_X':<8} {'Mag_Y':<8} {'Mag_Z':<8} {'Time':<8} {'Act':<3}")
-        print("-" * 80)
+        print("-" * 105)
         
         for i in range(min(10, len(single_participant_data))):
             row = single_participant_data[i]
@@ -115,7 +120,7 @@ def main():
         
         if len(single_participant_data) > 10:
             print(f"... (mais {len(single_participant_data) - 10} amostras)")
-        print("-" * 80)
+        print("-" * 105)
         
         execution_times['Exercício 2'] = time.time() - start_time
         print(f"\nTempo de execução: {format_time(execution_times['Exercício 2'])}")
@@ -491,16 +496,24 @@ def main():
         
         print("Considerando apenas atividades 1 a 7 (conforme especificação)")
         
-        # Filtra apenas atividades 1 a 7
+        # Filtra apenas atividades 1 a 7 em TODOS os dados da Meta 2
         activity_mask = (labels >= 1) & (labels <= 7)
         X_filtered = feature_matrix[activity_mask]
         y_filtered = labels[activity_mask]
         
+        # Filtra embeddings também
+        embeddings_filtered = embeddings[activity_mask]
+        
         # Filtra metadata (que é uma lista)
         metadata_filtered = [metadata[i] for i in range(len(metadata)) if activity_mask[i]]
         
+        # Filtra participant_ids para uso posterior
+        participant_ids_filtered = np.array([m['participant_id'] for m in metadata_filtered])
+        
         print(f"Amostras antes do filtro: {len(labels)}")
         print(f"Amostras após filtro (atividades 1-7): {len(y_filtered)}")
+        print(f"  Features: {X_filtered.shape}")
+        print(f"  Embeddings: {embeddings_filtered.shape}")
         
         # Analisa balanço do dataset
         balance_results = analyze_dataset_balance(X_filtered, y_filtered, verbose=True)
@@ -554,19 +567,11 @@ def main():
         print("-" * 60)
         start_time = time.time()
         
-        print("\nCarregando embeddings extraídos no Exercício 4.2...")
-        embeddings_loaded, labels_emb, participant_ids_emb, devices_emb = load_embeddings_dataset(
-            embeddings_path="data/features/embeddings_set.npz"
-        )
+        print("\nUsando embeddings já filtrados (atividades 1-7)...")
         
-        print(f"\nComparação com Features Dataset:")
-        print(f"  Features:  {feature_matrix.shape[0]} segmentos x {feature_matrix.shape[1]} features (handcrafted)")
-        print(f"  Embeddings: {embeddings_loaded.shape[0]} segmentos x {embeddings_loaded.shape[1]} features (transfer learning)")
-        
-        if embeddings_loaded.shape[0] == feature_matrix.shape[0]:
-            print(f"  ✓ ALINHAMENTO PERFEITO")
-        else:
-            print(f"  ✗ DESALINHAMENTO detectado")
+        print(f"\nComparação com Features Dataset (ambos filtrados 1-7):")
+        print(f"  Features:  {X_filtered.shape[0]} segmentos x {X_filtered.shape[1]} features (handcrafted)")
+        print(f"  Embeddings: {embeddings_filtered.shape[0]} segmentos x {embeddings_filtered.shape[1]} features (transfer learning)")
         
         execution_times['Exercício 2.1'] = time.time() - start_time
         print(f"\nTempo de execução: {format_time(execution_times['Exercício 2.1'])}")
@@ -577,11 +582,8 @@ def main():
         print("-" * 60)
         start_time = time.time()
         
-        print("Aplicando splits TVT (60-20-20%) em FEATURES e EMBEDDINGS")
+        print("Aplicando splits TVT (60-20-20%) em FEATURES e EMBEDDINGS (atividades 1-7)")
         print("Comparando estratégias within-subject vs between-subject")
-        
-        # Extrai participant_ids do metadata
-        participant_ids = np.array([m['participant_id'] for m in metadata])
         
         # EXERCÍCIO 3.1: Within-Subject Split (FEATURES)
         print(f"\nEXERCÍCIO 3.1: WITHIN-SUBJECT SPLIT")
@@ -589,9 +591,9 @@ def main():
         print("Split 60-20-20% dentro de cada participante")
         
         features_within = split_within_subject(
-            X=feature_matrix,
-            y=labels,
-            participant_ids=participant_ids,
+            X=X_filtered,
+            y=y_filtered,
+            participant_ids=participant_ids_filtered,
             train_size=0.6,
             val_size=0.2,
             test_size=0.2,
@@ -599,9 +601,9 @@ def main():
         )
         
         embeddings_within = split_within_subject(
-            X=embeddings,
-            y=labels,
-            participant_ids=participant_ids,
+            X=embeddings_filtered,
+            y=y_filtered,
+            participant_ids=participant_ids_filtered,
             train_size=0.6,
             val_size=0.2,
             test_size=0.2,
@@ -619,9 +621,9 @@ def main():
         print("Split 9-3-3 participantes distintos")
         
         features_between = split_between_subject(
-            X=feature_matrix,
-            y=labels,
-            participant_ids=participant_ids,
+            X=X_filtered,
+            y=y_filtered,
+            participant_ids=participant_ids_filtered,
             train_size=9,
             val_size=3,
             test_size=3,
@@ -629,9 +631,9 @@ def main():
         )
         
         embeddings_between = split_between_subject(
-            X=embeddings,
-            y=labels,
-            participant_ids=participant_ids,
+            X=embeddings_filtered,
+            y=y_filtered,
+            participant_ids=participant_ids_filtered,
             train_size=9,
             val_size=3,
             test_size=3,
@@ -724,20 +726,27 @@ def main():
         print(f"Val:   {X_val.shape[0]} amostras")
         print(f"Test:  {X_test.shape[0]} amostras")
         
+        # Aplicar SMOTE ao treino
+        X_train_balanced, y_train_balanced = balance_dataset_smote(X_train, y_train, n_neighbors=5, verbose=True)
+        
         # Treinar e avaliar k-NN com diferentes valores de k (ímpares de 1 a 20)
         k_values = list(range(1, 21, 2))  # [1, 3, 5, 7, 9, 11, 13, 15, 17, 19]
         
-        print(f"\n{'─' * 80}")
+        print(f"\n{'─' * 60}")
         print(f"{'k':<5} {'Accuracy':<12} {'Precision':<12} {'Recall':<12} {'F1-Score':<12}")
-        print(f"{'─' * 80}")
+        print(f"{'─' * 60}")
         
         results = []
         for k in k_values:
-            # Treina modelo
-            model = train_knn(X_train, y_train, k=k, verbose=False)
-            
-            # Prediz no conjunto de validação
-            y_pred_val = predict_knn(model, X_val, verbose=False)
+            # Treina modelo com dados balanceados
+            if USE_SKLEARN_KNN:
+                from sklearn.neighbors import KNeighborsClassifier
+                model = KNeighborsClassifier(n_neighbors=k, metric='manhattan', weights='distance')
+                model.fit(X_train_balanced, y_train_balanced)
+                y_pred_val = model.predict(X_val)
+            else:
+                model = train_knn(X_train_balanced, y_train_balanced, k=k, verbose=False)
+                y_pred_val = predict_knn(model, X_val, verbose=False)
             
             # Calcula métricas customizadas (sem imprimir)
             metrics = calculate_metrics(y_true=y_val, y_pred=y_pred_val, average='macro', verbose=False)
@@ -757,12 +766,12 @@ def main():
             print(f"{k:<5} {metrics['accuracy']:<12.4f} {metrics['precision']:<12.4f} "
                   f"{metrics['recall']:<12.4f} {metrics['f1_score']:<12.4f}")
         
-        print(f"{'─' * 80}")
+        print(f"{'─' * 60}")
         
         # Demonstração da função de métricas com output completo (exemplo com k=5)
-        print(f"\n{'=' * 80}")
+        print(f"\n{'-' * 60}")
         print("DEMONSTRAÇÃO DA FUNÇÃO calculate_metrics() - Exemplo com k=5")
-        print(f"{'=' * 80}")
+        print(f"{'-' * 60}")
         
         # Usa resultado já calculado para k=5 (índice 2 na lista: [1, 3, 5, ...])
         k5_result = results[2]  # k=5 é o 3º elemento (índice 2)
@@ -773,142 +782,192 @@ def main():
         print(f"\nTempo de execução: {format_time(execution_times['Exercícios 4.1 e 4.2'])}")
         print("Exercícios 4.1 e 4.2 concluídos!")
         
-        # EXERCÍCIO 5: Evaluation - Hyperparameter Tuning e Análise
-        print(f"\nEXERCÍCIO 5.1 e 5.2: HYPERPARAMETER TUNING E ANÁLISE")
+        # EXERCÍCIO 5: Evaluation - Hyperparameter Tuning e Testes de Hipótese
+        print(f"\nEXERCÍCIO 5: HYPERPARAMETER TUNING E TESTES DE HIPÓTESE")
         print("-" * 60)
         start_time = time.time()
         
-        print("Avaliando 2 splits × 3 cenários × 2 datasets = 12 configurações")
+        print("Avaliando 2 splits × 3 cenários × 2 datasets = 12 configurações\n")
         
-        # Define valores de k para tuning e modo (sklearn ou próprio)
+        # Define valores de k para tuning
         k_values_tuning = list(range(1, 21, 2))
-        use_sklearn_knn = True
         
-        # Features - Within-Subject
-        results_features_within = evaluate_all_scenarios(
-            scenarios_features_within,
-            train_knn,
-            calculate_metrics,
-            k_values_tuning,
-            use_sklearn=use_sklearn_knn,
-            verbose=False
-        )
+        # Verificar cache
+        use_cache = cache_exists()
+        if use_cache:
+            print("✓ Cache encontrado! Carregando automaticamente...\n")
+            distributions_within, distributions_between = load_results()
+        else:
+            # Inicializar logger
+            logger = ModelLogger(output_dir='logs')
+            print(f"Logs: {logger.tuning_file} | {logger.final_file}\n")
+            
+            n_iterations = 10
         
-        # Features - Between-Subject
-        results_features_between = evaluate_all_scenarios(
-            scenarios_features_between,
-            train_knn,
-            calculate_metrics,
-            k_values_tuning,
-            use_sklearn=use_sklearn_knn,
-            verbose=False
-        )
+            distributions_within = {'features': {}, 'embeddings': {}}
+            distributions_between = {'features': {}, 'embeddings': {}}
         
-        # Embeddings - Within-Subject
-        results_embeddings_within = evaluate_all_scenarios(
-            scenarios_embeddings_within,
-            train_knn,
-            calculate_metrics,
-            k_values_tuning,
-            use_sklearn=use_sklearn_knn,
-            verbose=False
-        )
+            configs = [
+                ('within', distributions_within, split_within_subject, 
+                 {'train_size': 0.6, 'val_size': 0.2, 'test_size': 0.2}),
+                ('between', distributions_between, split_between_subject, 
+                 {'train_size': 9, 'val_size': 3, 'test_size': 3})
+            ]
         
-        # Embeddings - Between-Subject
-        results_embeddings_between = evaluate_all_scenarios(
-            scenarios_embeddings_between,
-            train_knn,
-            calculate_metrics,
-            k_values_tuning,
-            use_sklearn=use_sklearn_knn,
-            verbose=False
-        )
+            total_evals = 2 * 2 * 3  # 2 splits × 2 datasets × 3 cenários
+            pbar = tqdm(total=total_evals, desc="Avaliando modelos", ncols=80)
         
-        # Tabelas resumo
-        print_summary_table(results_features_within, results_features_between, 'features')
-        print_summary_table(results_embeddings_within, results_embeddings_between, 'embeddings')
+            for split_name, dist_dict, split_fn, split_kwargs in configs:
+                for dataset_name, X_data in [('features', X_filtered), ('embeddings', embeddings_filtered)]:
+                    for scenario in ['all', 'pca', 'relieff']:
+                        splits = perform_multiple_splits(
+                            split_fn, X_data, y_filtered, participant_ids_filtered,
+                            n_iterations, split_name, **split_kwargs
+                        )
+                    
+                        # Faz tuning independente em cada split
+                        dist = evaluate_with_multiple_splits(
+                            splits, prepare_all_scenarios, train_knn, calculate_metrics,
+                            k_values_tuning, use_sklearn=USE_SKLEARN_KNN,
+                            logger=logger, split_name=split_name, dataset_name=dataset_name
+                        )
+                    
+                        # Calcula best_k usando moda dos 10 splits
+                        from scipy import stats as scipy_stats
+                        best_k_mode = int(scipy_stats.mode(dist[scenario]['best_ks'], keepdims=False)[0])
+                    
+                        dist_dict[dataset_name][scenario] = {
+                            'f1_scores': dist[scenario]['f1_scores'],
+                            'accuracies': dist[scenario]['accuracies'],
+                            'best_k': best_k_mode,
+                            'best_ks_per_split': dist[scenario]['best_ks'],
+                            'confusion_matrices': dist[scenario]['confusion_matrices'],
+                            'recalls_per_class': dist[scenario]['recalls_per_class']
+                        }
+                    
+                        pbar.update(1)
         
-        # Análise de matrizes de confusão
-        print("\nFEATURES - Within-Subject:")
-        compare_confusion_matrices(results_features_within, ['all', 'pca', 'relieff'], verbose=True)
+            pbar.close()
         
-        print("\nEMBEDDINGS - Within-Subject:")
-        compare_confusion_matrices(results_embeddings_within, ['all', 'pca', 'relieff'], verbose=True)
+            # Guardar resultados
+            save_results(distributions_within, distributions_between)
         
-        execution_times['Exercícios 5.1 e 5.2'] = time.time() - start_time
-        print(f"\nTempo de execução: {format_time(execution_times['Exercícios 5.1 e 5.2'])}")
-        print("Exercícios 5.1 e 5.2 concluídos!")
+        # Tabelas resumo com médias e desvios padrão
+        print_summary_table(distributions_within, distributions_between, 'features')
+        print_summary_table(distributions_within, distributions_between, 'embeddings')
         
-        # EXERCÍCIO 5.3: Testes de Hipótese
-        print(f"\nEXERCÍCIO 5.3: TESTES DE HIPÓTESE")
-        print("-" * 60)
-        start_time = time.time()
+        # Gerar matrizes de confusão médias para features_all
+        print("\nGerando matrizes de confusão médias para FEATURES_ALL...")
+        cm_path_within = plot_average_confusion_matrix(distributions_within, 'within', 'features')
+        cm_path_between = plot_average_confusion_matrix(distributions_between, 'between', 'features')
+        print(f"✓ Matriz de confusão (within-subject): {cm_path_within}")
+        print(f"✓ Matriz de confusão (between-subject): {cm_path_between}")
         
-        print("Repetindo splits 10 vezes para distribuições de performance...")
-        n_iterations = 10
+        # Criar visualizações dos testes de hipótese
+        print(f"\nGráficos salvos:")
+        results_within_hyp, plot_within = plot_hypothesis_tests(distributions_within, 'within')
+        results_between_hyp, plot_between = plot_hypothesis_tests(distributions_between, 'between')
+        print(f"✓ {plot_within}")
+        print(f"✓ {plot_between}")
         
-        # Features - Within (usa melhor k encontrado para 'all')
-        best_k_features_within = results_features_within['all']['best_k']
-        print(f"\nFEATURES - Within-Subject (k={best_k_features_within}):")
+        # Encontrar melhor modelo
+        print("\n─── MELHORES MODELOS (Média de 10 iterações) ───")
         
-        splits_features_within = perform_multiple_splits(
-            split_within_subject,
-            feature_matrix,
-            labels,
-            participant_ids,
-            n_iterations,
-            'within',
-            train_size=0.6,
-            val_size=0.2,
-            test_size=0.2
-        )
+        best_w, score_w, k_w, acc_w, _, comp_w = find_best_model(distributions_within)
+        print(f"\nWithin-Subject:")
+        print(f"  Melhor modelo: {best_w} (k={k_w})")
+        print(f"  F1-Score médio: {score_w:.4f}")
+        print(f"  Accuracy média: {acc_w:.4f}")
+        sig_count = sum(1 for c in comp_w.values() if c['significant'])
+        print(f"  Significativamente melhor que {sig_count}/{len(comp_w)} outros modelos")
         
-        dist_features_within = evaluate_with_multiple_splits(
-            splits_features_within,
-            prepare_all_scenarios,
-            train_knn,
-            calculate_metrics,
-            best_k_features_within,
-            use_sklearn=use_sklearn_knn
-        )
-        
-        hyp_features_within = hypothesis_testing(dist_features_within, alpha=0.05, verbose=True)
-        
-        # Embeddings - Within (usa melhor k encontrado para 'all')
-        best_k_embeddings_within = results_embeddings_within['all']['best_k']
-        print(f"\nEMBEDDINGS - Within-Subject (k={best_k_embeddings_within}):")
-        
-        splits_embeddings_within = perform_multiple_splits(
-            split_within_subject,
-            embeddings,
-            labels,
-            participant_ids,
-            n_iterations,
-            'within',
-            train_size=0.6,
-            val_size=0.2,
-            test_size=0.2
-        )
-        
-        dist_embeddings_within = evaluate_with_multiple_splits(
-            splits_embeddings_within,
-            prepare_all_scenarios,
-            train_knn,
-            calculate_metrics,
-            best_k_embeddings_within,
-            use_sklearn=use_sklearn_knn
-        )
-        
-        hyp_embeddings_within = hypothesis_testing(dist_embeddings_within, alpha=0.05, verbose=True)
+        best_b, score_b, k_b, acc_b, _, comp_b = find_best_model(distributions_between)
+        print(f"\nBetween-Subject:")
+        print(f"  Melhor modelo: {best_b} (k={k_b})")
+        print(f"  F1-Score médio: {score_b:.4f}")
+        print(f"  Accuracy média: {acc_b:.4f}")
+        sig_count = sum(1 for c in comp_b.values() if c['significant'])
+        print(f"  Significativamente melhor que {sig_count}/{len(comp_b)} outros modelos")
         
         print("\nJustificação: Teste de Wilcoxon (paired, não-paramétrico)")
         print("  • Amostras emparelhadas (mesmo split em cenários diferentes)")
         print("  • Não assume normalidade da distribuição")
         print("  • Apropriado para comparar performance de modelos")
         
-        execution_times['Exercício 5.3'] = time.time() - start_time
-        print(f"\nTempo de execução: {format_time(execution_times['Exercício 5.3'])}")
-        print("Exercício 5.3 concluído!")
+        execution_times['Exercício 5'] = time.time() - start_time
+        print(f"\nTempo de execução: {format_time(execution_times['Exercício 5'])}")
+        print("Exercício 5 concluído!")
+        
+        # EXERCÍCIO 6: Deployment - Função de Classificação
+        print(f"\nEXERCÍCIO 6: DEPLOYMENT - FUNÇÃO DE CLASSIFICAÇÃO")
+        print("-" * 60)
+        start_time = time.time()
+        
+        # Chama função para classificação com o modelo escolhido
+        # Formato: '{split}_{dataset}_{scenario}'
+        model_name = 'between_features_all'
+        
+        result = run_classification(
+            model_name,
+            distributions_within,
+            distributions_between,
+            X_filtered,
+            embeddings_filtered,
+            y_filtered,
+            participant_ids_filtered
+        )
+        
+        # Imprime resultados
+        print(f"\n✓ Modelo escolhido: {model_name}")
+        print(f"  • k otimizado: {result['best_k']}")
+        print(f"\n─── Seleção de Amostra de Teste ───")
+        print(f"  • Participante selecionado: {result['participant']}")
+        print(f"  • Atividade selecionada: {result['true_label']}")
+        print(f"  • Amostras de treino (sem participante {result['participant']}): {result['n_train_samples']}")
+        print(f"\n─── Balanceamento com SMOTE ───")
+        print(f"  • Total de amostras balanceadas: {result['n_balanced_samples']}")
+        print(f"\n─── Treinamento do Modelo ───")
+        print(f"  • Modelo treinado com {result['n_balanced_samples']} amostras balanceadas")
+        print(f"  • Array shape: {result['test_array_shape']}")
+        print(f"  • Label verdadeira: Atividade {result['true_label']}")
+        print(f"\n─── Classificação ───")
+        print(f"  • Label predita: Atividade {result['predicted_label']}")
+        print(f"  • Resultado: {'✓ CORRETA' if result['predicted_label'] == result['true_label'] else '✗ INCORRETA'}")
+        
+        execution_times['Exercício 6'] = time.time() - start_time
+        print(f"\nTempo de execução: {format_time(execution_times['Exercício 6'])}")
+        print("Exercício 6 concluído!")
+        
+        # EXERCÍCIO 6.1: Avaliação de Accuracy do Modelo
+        print(f"\nEXERCÍCIO 6.1: AVALIAÇÃO DE ACCURACY DO MODELO")
+        print("-" * 60)
+        start_time = time.time()
+        
+        print(f"Avaliando modelo: {model_name}")
+        print("Executando 1000 classificações aleatórias...\n")
+        
+        evaluation = evaluate_deployment_accuracy(
+            model_name=model_name,
+            distributions_within=distributions_within,
+            distributions_between=distributions_between,
+            X_features=X_filtered,
+            X_embeddings=embeddings_filtered,
+            y_labels=y_filtered,
+            participant_ids=participant_ids_filtered,
+            n_iterations=100
+        )
+        
+        print(f"\n{'=' * 60}")
+        print(f"RESULTADOS DA AVALIAÇÃO")
+        print(f"{'=' * 60}")
+        print(f"Total de classificações: {evaluation['n_total']}")
+        print(f"Classificações corretas: {evaluation['n_correct']}")
+        print(f"Classificações incorretas: {evaluation['n_total'] - evaluation['n_correct']}")
+        print(f"Accuracy: {evaluation['accuracy'] * 100:.2f}%")
+        
+        execution_times['Exercício 6.1'] = time.time() - start_time
+        print(f"\nTempo de execução: {format_time(execution_times['Exercício 6.1'])}")
+        print("Exercício 6.1 concluído!")
         
         # Resumo de tempos de execução
         print(f"\n{'=' * 60}")

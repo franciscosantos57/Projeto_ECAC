@@ -104,7 +104,7 @@ def detect_outliers_dbscan(data, eps=0.5, min_samples=5, use_modules=True, norma
     }
 
 
-def analyze_dbscan_outliers(data, eps_values, min_samples_values, create_plots=True):
+def analyze_dbscan_outliers(data, eps_values, min_samples_values, create_plots=True, output_dir="plots/meta1/exercicio_3.7.1_dbscan"):
     """
     Analisa outliers usando DBSCAN com diferentes combinações de parâmetros.
     Análogo ao analyze_kmeans_outliers do exercício 3.6/3.7.
@@ -114,6 +114,7 @@ def analyze_dbscan_outliers(data, eps_values, min_samples_values, create_plots=T
         eps_values: Lista de valores epsilon para testar
         min_samples_values: Lista de valores min_samples para testar
         create_plots: Se True, cria visualizações 3D
+        output_dir: Diretório para guardar gráficos
         
     Returns:
         Dict com resultados para cada combinação de parâmetros
@@ -156,7 +157,7 @@ def analyze_dbscan_outliers(data, eps_values, min_samples_values, create_plots=T
                     title_suffix=f"Amostra: {len(data_sample):,} pontos"
                 )
                 
-                filename = f"plots/exercicio_3.7.1_dbscan/dbscan_3d_eps{eps}_ms{min_samples}.png"
+                filename = f"{output_dir}/dbscan_3d_eps{eps}_ms{min_samples}.png"
                 os.makedirs(os.path.dirname(filename), exist_ok=True)
                 fig.savefig(filename, dpi=150, bbox_inches='tight')
                 del fig  # Liberta memória

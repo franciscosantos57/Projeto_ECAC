@@ -146,7 +146,7 @@ def visualize_smote_samples(X: np.ndarray, y: np.ndarray, participant_id: int,
                            feature_names: Optional[list] = None) -> str:
     """
     Visualiza amostras sintéticas geradas pelo SMOTE em scatter plot 2D.
-    Usa acc_module_mean (eixo X) e gyro_module_mean (eixo Y).
+    Usa acc_x_std (eixo X) e gyro_x_std (eixo Y) para melhor separação visual.
     
     Args:
         X: Feature matrix do participante
@@ -162,9 +162,9 @@ def visualize_smote_samples(X: np.ndarray, y: np.ndarray, participant_id: int,
     """
     os.makedirs(output_dir, exist_ok=True)
     
-    # Índices das features: acc_module_mean (7) e gyro_module_mean (34)
-    feature_idx_1 = feature_names.index('acc_module_mean') if feature_names else 7
-    feature_idx_2 = feature_names.index('gyro_module_mean') if feature_names else 34
+    # Índices das features: acc_x_std e gyro_x_std (melhor separação entre atividades)
+    feature_idx_1 = feature_names.index('acc_x_std') if feature_names else 2
+    feature_idx_2 = feature_names.index('gyro_x_std') if feature_names else 56
     
     # Configura o plot
     fig, ax = plt.subplots(figsize=(12, 8))
@@ -197,8 +197,8 @@ def visualize_smote_samples(X: np.ndarray, y: np.ndarray, participant_id: int,
               edgecolors='darkred', linewidths=2)
     
     # Configurações do gráfico
-    xlabel = feature_names[feature_idx_1] if feature_names else 'acc_module_mean'
-    ylabel = feature_names[feature_idx_2] if feature_names else 'gyro_module_mean'
+    xlabel = feature_names[feature_idx_1] if feature_names else 'acc_x_std'
+    ylabel = feature_names[feature_idx_2] if feature_names else 'gyro_x_std'
     
     ax.set_xlabel(xlabel, fontsize=12, fontweight='bold')
     ax.set_ylabel(ylabel, fontsize=12, fontweight='bold')
@@ -273,17 +273,17 @@ def demonstrate_smote(X: np.ndarray, y: np.ndarray, participant_id: int,
     
     if verbose:
         print(f"✓ Gráfico salvo: {plot_path}")
-        print("\n" + "=" * 60)
+        print("=" * 60)
         print("RESUMO DAS AMOSTRAS SINTÉTICAS")
         print("=" * 60)
         
-        idx1 = feature_names.index('acc_module_mean') if feature_names else 7
-        idx2 = feature_names.index('gyro_module_mean') if feature_names else 34
+        idx1 = feature_names.index('acc_x_std') if feature_names else 2
+        idx2 = feature_names.index('gyro_x_std') if feature_names else 56
         
-        print(f"\nFeatures visualizadas (acc_module_mean e gyro_module_mean):")
+        print(f"\nFeatures visualizadas (acc_x_std e gyro_x_std):")
         print("-" * 60)
         for i, sample in enumerate(synthetic_samples, 1):
-            print(f"Amostra {i}: acc_module_mean={sample[idx1]:8.4f}, gyro_module_mean={sample[idx2]:8.4f}")
+            print(f"Amostra {i}: acc_x_std={sample[idx1]:8.4f}, gyro_x_std={sample[idx2]:8.4f}")
         print("=" * 60)
     
     return {
