@@ -15,9 +15,6 @@ def evaluate_deployment_accuracy(model_name, distributions_within, distributions
     """
     Avalia a accuracy de um modelo executando múltiplas classificações.
     
-    Esta função chama run_classification várias vezes para avaliar o desempenho
-    do modelo em diferentes amostras aleatórias.
-    
     Args:
         model_name (str): Nome do modelo - formato: 'within_features_all', 'between_embeddings_pca', etc.
         distributions_within (dict): Resultados do exercício 5.3 (within-subject)
@@ -39,8 +36,11 @@ def evaluate_deployment_accuracy(model_name, distributions_within, distributions
     n_correct = 0
     n_total = 0
     
+    # TREINA MODELO UMA ÚNICA VEZ (primeira iteração)
+    trained_model = None
+    
     # Executa classificações com barra de progresso
-    for _ in tqdm(range(n_iterations), desc="Classificando"):
+    for i in tqdm(range(n_iterations), desc="Classificando", ncols=80):
         try:
             result = run_classification(
                 model_name,
@@ -49,8 +49,13 @@ def evaluate_deployment_accuracy(model_name, distributions_within, distributions
                 X_features,
                 X_embeddings,
                 y_labels,
-                participant_ids
+                participant_ids,
+                trained_model=trained_model
             )
+            
+            # Guarda modelo treinado para reutilizar nas próximas iterações
+            if i == 0:
+                trained_model = result['trained_model']
             
             # Verifica se classificação foi correta
             if result['predicted_label'] == result['true_label']:

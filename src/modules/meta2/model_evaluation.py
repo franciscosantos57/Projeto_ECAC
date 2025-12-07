@@ -224,7 +224,7 @@ def hypothesis_testing(distributions_dict, alpha=0.05, verbose=True):
 def print_summary_table(distributions_within, distributions_between, dataset_name):
     """
     Imprime tabela resumo dos resultados de múltiplas iterações (Exercício 5.3).
-    Mostra média, desvio padrão, melhor k (moda) e atividade mais difícil das 10 iterações.
+    Mostra média, desvio padrão, melhor k (mediana) e atividade mais difícil das 10 iterações.
     
     Args:
         distributions_within: Dict com distribuições within-subject
@@ -245,7 +245,7 @@ def print_summary_table(distributions_within, distributions_between, dataset_nam
         f1_std = np.std(w['f1_scores'])
         acc_mean = np.mean(w['accuracies'])
         acc_std = np.std(w['accuracies'])
-        best_k_mode = int(scipy_stats.mode(w['best_ks_per_split'], keepdims=False)[0])
+        best_k_median = int(np.median(w['best_ks_per_split']))
         
         # Calcular recall médio por classe e encontrar pior atividade
         recalls_array = np.array(w['recalls_per_class'])  # shape: (n_iterations, n_classes)
@@ -253,7 +253,7 @@ def print_summary_table(distributions_within, distributions_between, dataset_nam
         worst_class_idx = np.argmin(mean_recalls)
         worst_recall = mean_recalls[worst_class_idx]
         
-        print(f"{scenario:<15} {'within':<12} {best_k_mode:<8} "
+        print(f"{scenario:<15} {'within':<12} {best_k_median:<8} "
               f"{f1_mean:.4f} (±{f1_std:.4f})     "
               f"{acc_mean:.4f} (±{acc_std:.4f})     "
               f"Ativ. {worst_class_idx + 1} ({worst_recall:.3f})")
@@ -264,7 +264,7 @@ def print_summary_table(distributions_within, distributions_between, dataset_nam
         f1_std = np.std(b['f1_scores'])
         acc_mean = np.mean(b['accuracies'])
         acc_std = np.std(b['accuracies'])
-        best_k_mode = int(scipy_stats.mode(b['best_ks_per_split'], keepdims=False)[0])
+        best_k_median = int(np.median(b['best_ks_per_split']))
         
         # Calcular recall médio por classe e encontrar pior atividade
         recalls_array = np.array(b['recalls_per_class'])  # shape: (n_iterations, n_classes)
@@ -272,7 +272,7 @@ def print_summary_table(distributions_within, distributions_between, dataset_nam
         worst_class_idx = np.argmin(mean_recalls)
         worst_recall = mean_recalls[worst_class_idx]
         
-        print(f"{'':<15} {'between':<12} {best_k_mode:<8} "
+        print(f"{'':<15} {'between':<12} {best_k_median:<8} "
               f"{f1_mean:.4f} (±{f1_std:.4f})     "
               f"{acc_mean:.4f} (±{acc_std:.4f})     "
               f"Ativ. {worst_class_idx + 1} ({worst_recall:.3f})")
@@ -306,7 +306,7 @@ def plot_average_confusion_matrix(distributions_dict, split_type, dataset_name,
     cm_mean = np.mean(confusion_matrices, axis=0)
     
     # Calcular métricas médias
-    best_k_mode = int(scipy_stats.mode(scenario_data['best_ks_per_split'], keepdims=False)[0])
+    best_k_median = int(np.median(scenario_data['best_ks_per_split']))
     f1_mean = np.mean(scenario_data['f1_scores'])
     acc_mean = np.mean(scenario_data['accuracies'])
     
@@ -328,7 +328,7 @@ def plot_average_confusion_matrix(distributions_dict, split_type, dataset_name,
     ax.set_ylabel('Classe Real', fontsize=12, fontweight='bold')
     
     title = f'Matriz de Confusão Média - {dataset_name.upper()}_ALL ({split_type.upper()}-Subject)\n'
-    title += f'k={best_k_mode} | Accuracy={acc_mean:.4f} | F1-Score={f1_mean:.4f}'
+    title += f'k={best_k_median} | Accuracy={acc_mean:.4f} | F1-Score={f1_mean:.4f}'
     ax.set_title(title, fontsize=14, fontweight='bold', pad=20)
     
     plt.tight_layout()

@@ -12,12 +12,10 @@ seaborn>=0.11.0
 
 # Machine Learning
 scikit-learn>=1.0.0
-imbalanced-learn>=0.9.0  # Para SMOTE
 
 # Deep Learning - PyTorch (para extração de embeddings)
-# Instalar versão CPU (mais leve)
 torch>=2.0.0
 torchvision>=0.15.0
 
 # Utilitários
-tqdm>=4.62.0  # Barras de progresso (opcional)
+tqdm>=4.62.0  # Barras de progresso

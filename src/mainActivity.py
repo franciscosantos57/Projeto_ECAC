@@ -126,7 +126,7 @@ def main():
         print(f"\nTempo de execução: {format_time(execution_times['Exercício 2'])}")
         print("Exercício 2 concluído!")
         
-        # CARREGAR DADOS DE TODOS OS PARTICIPANTES para exercícios seguintes
+        # Carrega dados de todos os participantes para exercícios seguintes
         print(f"\nCARREGANDO TODOS OS PARTICIPANTES PARA ANÁLISE GLOBAL")
         print("-" * 60)
         start_time = time.time()
@@ -303,7 +303,7 @@ def main():
         print("Aplicando testes de significância (ANOVA ou Kruskal-Wallis)")
         print("Determinando poder discriminante dos módulos dos sensores")
         
-        # Executa análise de significância (sem gráficos)
+        # Executa análise de significância
         significance_results = analyze_statistical_significance(all_data, output_dir=None)
         
         execution_times['Exercício 4.1'] = time.time() - start_time
@@ -335,7 +335,7 @@ def main():
             # Parâmetros de segmentação
             window_size_sec = 5
             overlap = 0.5
-            sampling_rate = 50  # Hz (baseado no dataset)
+            sampling_rate = 50
             
             print(f"\nParâmetros de segmentação:")
             print(f"  • Tamanho da janela: {window_size_sec}s")
@@ -898,14 +898,17 @@ def main():
         print(f"\nTempo de execução: {format_time(execution_times['Exercício 5'])}")
         print("Exercício 5 concluído!")
         
-        # EXERCÍCIO 6: Deployment - Função de Classificação
-        print(f"\nEXERCÍCIO 6: DEPLOYMENT - FUNÇÃO DE CLASSIFICAÇÃO")
+        # EXERCÍCIO 6: Deployment e Avaliação de Accuracy
+        print(f"\nEXERCÍCIO 6: DEPLOYMENT E AVALIAÇÃO DE ACCURACY")
         print("-" * 60)
         start_time = time.time()
         
         # Chama função para classificação com o modelo escolhido
         # Formato: '{split}_{dataset}_{scenario}'
         model_name = 'between_features_all'
+        
+        print(f"Modelo escolhido: {model_name}")
+        print("Executando classificação de exemplo...\n")
         
         result = run_classification(
             model_name,
@@ -917,13 +920,15 @@ def main():
             participant_ids_filtered
         )
         
-        # Imprime resultados
-        print(f"\n✓ Modelo escolhido: {model_name}")
+        # Imprime resultados da classificação de exemplo
+        print(f"\n✓ Exemplo de Classificação")
         print(f"  • k otimizado: {result['best_k']}")
         print(f"\n─── Seleção de Amostra de Teste ───")
         print(f"  • Participante selecionado: {result['participant']}")
         print(f"  • Atividade selecionada: {result['true_label']}")
-        print(f"  • Amostras de treino (sem participante {result['participant']}): {result['n_train_samples']}")
+        print(f"  • Ruído adicionado (desvio padrão médio): {result['noise_std']:.4f}")
+        print(f"\n─── Dataset de Treino ───")
+        print(f"  • Total de amostras (dataset completo): {result['n_train_samples']}")
         print(f"\n─── Balanceamento com SMOTE ───")
         print(f"  • Total de amostras balanceadas: {result['n_balanced_samples']}")
         print(f"\n─── Treinamento do Modelo ───")
@@ -934,17 +939,14 @@ def main():
         print(f"  • Label predita: Atividade {result['predicted_label']}")
         print(f"  • Resultado: {'✓ CORRETA' if result['predicted_label'] == result['true_label'] else '✗ INCORRETA'}")
         
-        execution_times['Exercício 6'] = time.time() - start_time
-        print(f"\nTempo de execução: {format_time(execution_times['Exercício 6'])}")
-        print("Exercício 6 concluído!")
-        
-        # EXERCÍCIO 6.1: Avaliação de Accuracy do Modelo
-        print(f"\nEXERCÍCIO 6.1: AVALIAÇÃO DE ACCURACY DO MODELO")
-        print("-" * 60)
-        start_time = time.time()
-        
-        print(f"Avaliando modelo: {model_name}")
-        print("Executando 1000 classificações aleatórias...\n")
+        # Avaliação de Accuracy com múltiplas iterações
+        print(f"\n{'─' * 60}")
+        print(f"AVALIAÇÃO DE ACCURACY")
+        print(f"{'─' * 60}")
+
+        n_iterations = 200
+
+        print(f"Executando {n_iterations} classificações aleatórias...\n")
         
         evaluation = evaluate_deployment_accuracy(
             model_name=model_name,
@@ -954,7 +956,7 @@ def main():
             X_embeddings=embeddings_filtered,
             y_labels=y_filtered,
             participant_ids=participant_ids_filtered,
-            n_iterations=100
+            n_iterations=n_iterations
         )
         
         print(f"\n{'=' * 60}")
@@ -965,19 +967,49 @@ def main():
         print(f"Classificações incorretas: {evaluation['n_total'] - evaluation['n_correct']}")
         print(f"Accuracy: {evaluation['accuracy'] * 100:.2f}%")
         
-        execution_times['Exercício 6.1'] = time.time() - start_time
-        print(f"\nTempo de execução: {format_time(execution_times['Exercício 6.1'])}")
-        print("Exercício 6.1 concluído!")
+        execution_times['Exercício 6'] = time.time() - start_time
+        print(f"\nTempo de execução: {format_time(execution_times['Exercício 6'])}")
+        print("Exercício 6 concluído!")
         
         # Resumo de tempos de execução
         print(f"\n{'=' * 60}")
         print(f"RESUMO DE TEMPOS DE EXECUÇÃO")
         print(f"{'=' * 60}")
-        total_time = 0
+        
+        # Separa exercícios por meta
+        meta1_exercises = [
+            'Exercício 2', 'Exercício 3.1', 'Exercício 3.2', 'Exercício 3.3',
+            'Exercício 3.4', 'Exercício 3.5', 'Exercícios 3.6 e 3.7',
+            'Exercício 3.7.1', 'Exercício 4.1', 'Exercício 4.2',
+            'Exercícios 4.3 e 4.4', 'Exercícios 4.5 e 4.6',
+            'Exercício 4.6.1', 'Exercício 4.6.2'
+        ]
+        
+        print("\nMETA 1 - ENGENHARIA DE CARACTERÍSTICAS")
+        print("-" * 60)
+        meta1_time = 0
+        for exercise in meta1_exercises:
+            if exercise in execution_times:
+                exec_time = execution_times[exercise]
+                print(f"{exercise:35s}: {format_time(exec_time)}")
+                meta1_time += exec_time
+        print(f"{'-' * 60}")
+        print(f"{'Subtotal Meta 1':35s}: {format_time(meta1_time)}")
+        print(f"{'-' * 60}")
+        
+        print("\nMETA 2 - TRANSFER LEARNING E DATA AUGMENTATION")
+        print("-" * 60)
+        meta2_time = 0
         for exercise, exec_time in execution_times.items():
-            print(f"{exercise:35s}: {format_time(exec_time)}")
-            total_time += exec_time
-        print(f"{'=' * 60}")
+            if exercise not in meta1_exercises:
+                print(f"{exercise:35s}: {format_time(exec_time)}")
+                meta2_time += exec_time
+        print(f"{'-' * 60}")
+        print(f"{'Subtotal Meta 2':35s}: {format_time(meta2_time)}")
+        print(f"{'-' * 60}")
+        
+        total_time = meta1_time + meta2_time
+        print(f"\n{'=' * 60}")
         print(f"{'TEMPO TOTAL':35s}: {format_time(total_time)}")
         print(f"{'=' * 60}")
         
