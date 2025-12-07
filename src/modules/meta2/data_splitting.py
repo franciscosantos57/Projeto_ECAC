@@ -189,9 +189,6 @@ def compare_splitting_strategies(within_split, between_split, verbose=True):
         print("\nBetween-Subject: participantes distintos por partição.")
         print("  • Prós: avalia melhor a generalização para novos participantes; mais realista para deployment.")
         print("  • Contras: menos dados por conjunto e maior variância nas métricas entre splits.")
-        
-        print("\nConclusão: A melhor estratégia parece ser a abrodagem Between-Subject, uma vez que reflete")
-        print("           melhor a capacidade de generalização para novos participantes, crucial em aplicações reais.")
         print("=" * 60)
     
     return {
