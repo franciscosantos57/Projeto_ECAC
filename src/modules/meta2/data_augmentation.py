@@ -13,8 +13,6 @@ def analyze_dataset_balance(X: np.ndarray, y: np.ndarray, verbose: bool = True) 
     """
     Analisa o balanço do dataset entre as diferentes atividades.
     
-    Exercício 1.1: Verifica se o dataset está balanceado.
-    
     Args:
         X: Feature matrix (n_samples, n_features)
         y: Labels (n_samples,)

@@ -1,15 +1,6 @@
 """
 Módulos da Meta 2: Machine Learning e Data Augmentation
 Aplicação de modelos de ML e técnicas de aumento de dados
-
-Inclui:
-- data_augmentation: SMOTE para balanceamento de dados
-- embedding_extraction: Análise de embeddings extraídos via transfer learning
-- data_splitting: Estratégias de split within-subject e between-subject
-- dataset_scenarios: Preparação de cenários (all, PCA, ReliefF)
-- knn_classifier: Implementação própria do algoritmo k-NN
-- classification_metrics: Cálculo de métricas de classificação
-- model_evaluation: Hyperparameter tuning e testes de hipótese
 """
 
 from .data_augmentation import (

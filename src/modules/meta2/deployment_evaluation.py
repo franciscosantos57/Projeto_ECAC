@@ -10,7 +10,7 @@ from src.modules.meta2.deployment import run_classification
 
 
 def evaluate_deployment_accuracy(model_name, distributions_within, distributions_between,
-                                 X_features, X_embeddings, y_labels, participant_ids,
+                                 X_features, X_embeddings, y_labels,
                                  n_iterations):
     """
     Avalia a accuracy de um modelo executando múltiplas classificações.
@@ -22,7 +22,6 @@ def evaluate_deployment_accuracy(model_name, distributions_within, distributions
         X_features (np.ndarray): Dataset completo de features
         X_embeddings (np.ndarray): Dataset completo de embeddings
         y_labels (np.ndarray): Labels do dataset
-        participant_ids (np.ndarray): IDs dos participantes para cada amostra
         n_iterations (int): Número de classificações a executar
     
     Returns:
@@ -36,9 +35,6 @@ def evaluate_deployment_accuracy(model_name, distributions_within, distributions
     n_correct = 0
     n_total = 0
     
-    # TREINA MODELO UMA ÚNICA VEZ (primeira iteração)
-    trained_model = None
-    
     # Executa classificações com barra de progresso
     for i in tqdm(range(n_iterations), desc="Classificando", ncols=80):
         try:
@@ -48,14 +44,8 @@ def evaluate_deployment_accuracy(model_name, distributions_within, distributions
                 distributions_between,
                 X_features,
                 X_embeddings,
-                y_labels,
-                participant_ids,
-                trained_model=trained_model
+                y_labels
             )
-            
-            # Guarda modelo treinado para reutilizar nas próximas iterações
-            if i == 0:
-                trained_model = result['trained_model']
             
             # Verifica se classificação foi correta
             if result['predicted_label'] == result['true_label']:

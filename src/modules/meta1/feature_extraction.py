@@ -201,7 +201,7 @@ def spectral_centroid(signal, sampling_rate=50):
 
 
 # ============================================================================
-# FEATURES ADICIONAIS DO PAPER (Movement Intensity, SMA, EVA, etc.)
+# FEATURES ADICIONAIS DO ARTIGO (Movement Intensity, SMA, EVA, etc.)
 # ============================================================================
 
 def movement_intensity_features(acc_x, acc_y, acc_z):

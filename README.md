@@ -1,4 +1,4 @@
-# Projeto ECAC - Análise de Dados de Sensores
+# Projeto ECAC - Classificação de Atividades Humanas
 
 ## Como Correr o Programa
 

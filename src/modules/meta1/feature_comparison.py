@@ -23,27 +23,24 @@ def compare_feature_selection_methods(X, y, feature_names, top_k=10,
     """
     Compara Fisher Score e ReliefF na seleção das top-k features.
     
-    Parâmetros:
-    -----------
-    X : np.ndarray
-        Matriz de features [n_samples, n_features]
-    y : np.ndarray
-        Array de labels [n_samples]
-    feature_names : list
-        Lista com nomes das features
-    top_k : int
-        Número de melhores features a identificar
-    relieff_neighbors : int
-        Número de vizinhos para ReliefF
-    relieff_samples : int
-        Número de amostras para ReliefF
-    verbose : bool
-        Se True, imprime informações
-        
-    Retorna:
-    --------
-    results : dict
-        Dicionário com resultados de ambos os métodos
+    Args:
+        X : np.ndarray
+            Matriz de features [n_samples, n_features]
+        y : np.ndarray
+            Labels das classes [n_samples,]
+        feature_names : list
+            Nomes das features [n_features,]
+        top_k : int
+            Número de features a selecionar (default: 10)
+        relieff_neighbors : int
+            Número de vizinhos para ReliefF (default: 10)
+        relieff_samples : int
+            Número de amostras para ReliefF (default: 100)
+        verbose : bool
+            Se True, imprime progresso
+
+    Returns:
+        dict : Resultados da comparação contendo scores e rankings
     """
     if verbose:
         print(f"Comparando Fisher Score vs ReliefF (top-{top_k} features)")
@@ -83,14 +80,13 @@ def compare_rankings(fisher_ranking, relieff_ranking, top_k=10):
     """
     Compara os rankings de Fisher Score e ReliefF lado a lado.
     
-    Parâmetros:
-    -----------
-    fisher_ranking : list of tuples
-        Ranking do Fisher Score
-    relieff_ranking : list of tuples
-        Ranking do ReliefF
-    top_k : int
-        Número de features a comparar
+    Args:
+        fisher_ranking : list of tuples
+            Ranking do Fisher Score
+        relieff_ranking : list of tuples
+            Ranking do ReliefF
+        top_k : int
+            Número de features a exibir
     """
     print(f"\nComparação Fisher vs ReliefF:")
     print("-" * 89)
@@ -114,17 +110,14 @@ def analyze_agreement(fisher_ranking, relieff_ranking):
     """
     Analisa concordância entre os dois métodos.
     
-    Parâmetros:
-    -----------
-    fisher_ranking : list of tuples
-        Ranking do Fisher Score
-    relieff_ranking : list of tuples
-        Ranking do ReliefF
-        
-    Retorna:
-    --------
-    agreement : dict
-        Dicionário com métricas de concordância
+    Args:
+        fisher_ranking : list of tuples
+            Ranking do Fisher Score
+        relieff_ranking : list of tuples
+            Ranking do ReliefF
+
+    Returns:
+        dict : Métricas de concordância
     """
     # Extrai nomes das features
     fisher_features = set([f[0] for f in fisher_ranking])
@@ -168,21 +161,19 @@ def extract_selected_features(X, feature_names, selected_feature_names):
     """
     EXERCÍCIO 4.6.1: Extrai apenas as features selecionadas da matriz completa.
     
-    Parâmetros:
-    -----------
-    X : np.ndarray
-        Matriz de features completa [n_samples, n_features]
-    feature_names : list
-        Lista com todos os nomes das features
-    selected_feature_names : list
-        Lista com nomes das features selecionadas
-        
-    Retorna:
-    --------
-    X_selected : np.ndarray
-        Matriz com apenas as features selecionadas [n_samples, n_selected]
-    selected_indices : list
-        Índices das features selecionadas
+    Args:
+        X : np.ndarray
+            Matriz completa de features [n_samples, n_features]
+        feature_names : list
+            Nomes das features [n_features,]
+        selected_feature_names : list
+            Nomes das features selecionadas
+
+    Returns:
+        X_selected : np.ndarray
+            Matriz com apenas as features selecionadas [n_samples, n_selected]
+        selected_indices : list
+            Índices das features selecionadas na matriz original
     """
     # Encontra índices das features selecionadas
     selected_indices = [i for i, name in enumerate(feature_names) 
@@ -199,25 +190,22 @@ def demonstrate_feature_extraction(X, feature_names, fisher_ranking, relieff_ran
     """
     EXERCÍCIO 4.6.1: Demonstra extração de features para um instante específico.
     
-    Parâmetros:
-    -----------
-    X : np.ndarray
-        Matriz de features completa
-    feature_names : list
-        Lista com nomes das features
-    fisher_ranking : list
-        Ranking do Fisher Score
-    relieff_ranking : list
-        Ranking do ReliefF
-    sample_idx : int
-        Índice do instante a exemplificar
-    verbose : bool
-        Se True, imprime exemplo
-        
-    Retorna:
-    --------
-    example : dict
-        Dicionário com exemplo de extração
+    Args:
+        X : np.ndarray
+            Matriz completa de features [n_samples, n_features]
+        feature_names : list
+            Nomes das features [n_features,]
+        fisher_ranking : list of tuples
+            Ranking do Fisher Score
+        relieff_ranking : list of tuples
+            Ranking do ReliefF
+        sample_idx : int
+            Índice do instante a demonstrar (default: 0)
+        verbose : bool
+            Se True, imprime progresso
+
+    Returns:
+        dict : Dicionário com features extraídas e índices
     """
     # Extrai top-10 features de cada método
     fisher_features = [f[0] for f in fisher_ranking[:10]]
@@ -266,21 +254,18 @@ def analyze_selection_approach(fisher_ranking, relieff_ranking, X_shape, verbose
     """
     EXERCÍCIO 4.6.2: Analisa vantagens e limitações da seleção de features.
     
-    Parâmetros:
-    -----------
-    fisher_ranking : list
-        Ranking do Fisher Score
-    relieff_ranking : list
-        Ranking do ReliefF
-    X_shape : tuple
-        Shape da matriz original (n_samples, n_features)
-    verbose : bool
-        Se True, imprime análise resumida
-        
-    Retorna:
-    --------
-    analysis : dict
-        Dicionário com análise da abordagem
+    Args:
+        fisher_ranking : list of tuples
+            Ranking do Fisher Score
+        relieff_ranking : list of tuples
+            Ranking do ReliefF
+        X_shape : tuple
+            Dimensão da matriz original de features (n_samples, n_features) 
+        verbose : bool
+            Se True, imprime análise resumida
+
+    Returns:
+        dict : Métricas da análise
     """
     n_samples, n_features = X_shape
     

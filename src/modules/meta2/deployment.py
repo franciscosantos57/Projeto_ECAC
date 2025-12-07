@@ -17,23 +17,24 @@ from src.modules.meta2.smote_balancer import balance_dataset_smote
 
 
 def run_classification(model_name, distributions_within, distributions_between,
-                      X_features, X_embeddings, y_labels, participant_ids,
-                      trained_model=None):
+                      X_features, X_embeddings, y_labels):
     """
-    Executa classificação completa: seleciona array aleatório, adiciona ruído e classifica.
+    Executa classificação completa: seleciona array aleatório, aplica variação realista, e remove-o do dataset de treino.
     
     Pipeline:
         1. Seleciona participante e atividade aleatórios
         2. Extrai janela de 256 amostras
-        3. Adiciona ruído gaussiano baseado no desvio padrão (simula janela nunca vista)
-        4. Busca melhor k do modelo escolhido (do exercício 5)
-        5. Aplica SMOTE para balancear dados de treino (com todo o dataset) [se trained_model=None]
-        6. Treina modelo com dados balanceados [se trained_model=None]
-        7. Extrai features/embeddings da janela com ruído
-        8. Normalização (Z-Score)
-        9. Redução dimensional (PCA ou ReliefF, se aplicável)
-        10. Classificação (k-NN)
-        11. Verifica se classificação está correta
+        3. Aplica variação realista (scaling + noise)
+        4. Identifica o índice correspondente no dataset
+        5. Remove essa amostra do dataset de treino
+        6. Busca melhor k do modelo escolhido (do exercício 5)
+        7. Aplica SMOTE para balancear dados de treino
+        8. Treina modelo com dados balanceados
+        9. Extrai features/embeddings da janela de teste (com variação)
+        10. Normalização (Z-Score)
+        11. Redução dimensional (PCA ou ReliefF, se aplicável)
+        12. Classificação (k-NN)
+        13. Verifica se classificação está correta
     
     Args:
         model_name (str): Nome do modelo - formato: 'within_features_all', 'between_embeddings_pca', etc.
@@ -43,21 +44,17 @@ def run_classification(model_name, distributions_within, distributions_between,
         X_features (np.ndarray): Dataset completo de features
         X_embeddings (np.ndarray): Dataset completo de embeddings
         y_labels (np.ndarray): Labels do dataset
-        participant_ids (np.ndarray): IDs dos participantes para cada amostra
-        trained_model (dict, optional): Modelo já treinado com scaler, knn_model, pca_model, relieff_indices.
-                                       Se None, treina um novo modelo.
     
     Returns:
         dict: Dicionário com resultados da classificação contendo:
             - best_k: Valor k otimizado
             - participant: ID do participante selecionado
             - true_label: Label verdadeira da atividade
-            - n_train_samples: Número de amostras de treino (todo o dataset)
+            - n_train_samples: Número de amostras de treino (após remover teste)
             - n_balanced_samples: Número de amostras após SMOTE
-            - test_array_shape: Shape do array de teste (com ruído)
-            - noise_std: Desvio padrão do ruído adicionado
+            - test_array_shape: Shape do array de teste
+            - scale_factor: Fator de escala aplicado na variação
             - predicted_label: Label predita pelo modelo
-            - trained_model: Modelo treinado (para reutilização)
     """
     
     # Extrai scenario (within/between), tipo (features/embeddings) e redução (all/pca/relieff)
@@ -77,54 +74,6 @@ def run_classification(model_name, distributions_within, distributions_between,
     
     # Seleciona dataset correto
     X_full = X_embeddings if model_type == 'embeddings' else X_features
-    
-    # SE MODELO JÁ FOI TREINADO, USA O TREINADO
-    if trained_model is not None:
-        scaler = trained_model['scaler']
-        knn_model = trained_model['knn_model']
-        pca_model = trained_model['pca_model']
-        relieff_indices = trained_model['relieff_indices']
-        n_train_samples = trained_model['n_train_samples']
-        n_balanced_samples = trained_model['n_balanced_samples']
-    else:
-        # TREINA MODELO PELA PRIMEIRA VEZ
-        X_train = X_full
-        y_train = y_labels
-        n_train_samples = len(y_train)
-        
-        # ETAPA 1: Normaliza dados de treino
-        scaler = StandardScaler()
-        X_normalized = scaler.fit_transform(X_train)
-        
-        # ETAPA 2: Aplica redução dimensional (se aplicável)
-        pca_model = None
-        relieff_indices = None
-        
-        if reduction == 'pca':
-            # Calcula PCA nos dados normalizados
-            pca_full, _ = apply_pca(X_normalized, n_components=None)
-            cumsum_var = np.cumsum(pca_full.explained_variance_ratio_)
-            n_components = np.argmax(cumsum_var >= 0.90) + 1
-            
-            # Aplica PCA com n_components otimizado
-            pca_model, X_normalized = apply_pca(X_normalized, n_components=n_components)
-            
-        elif reduction == 'relieff':
-            # Calcula ReliefF nos dados normalizados
-            relieff_scores = calculate_relieff_score(
-                X_normalized, y_train, n_neighbors=10,
-                n_samples=min(100, len(X_normalized))
-            )
-            relieff_indices = np.argsort(relieff_scores)[::-1][:15]
-            X_normalized = X_normalized[:, relieff_indices]
-        
-        # ETAPA 3: Aplica SMOTE nos dados normalizados e reduzidos
-        X_balanced, y_balanced = balance_dataset_smote(X_normalized, y_train, n_neighbors=5, verbose=False)
-        n_balanced_samples = len(y_balanced)
-        
-        # ETAPA 4: Treina k-NN
-        knn_model = KNeighborsClassifier(n_neighbors=best_k, metric='manhattan', weights='distance')
-        knn_model.fit(X_balanced, y_balanced)
     
     # Garante aleatoriedade verdadeira (não usa seed fixa)
     np.random.seed(None)
@@ -147,26 +96,67 @@ def run_classification(model_name, distributions_within, distributions_between,
     start_idx = np.random.randint(0, max_start + 1)
     test_array_original = activity_data[start_idx:start_idx + 256, 1:10]  # Colunas 1-9 (sensores)
     
-    # Calcula desvio padrão por coluna
-    noise_std = np.std(test_array_original, axis=0)
-    
-    # Gera ruído gaussiano com mesmo desvio padrão
-    noise = np.random.normal(0, noise_std, test_array_original.shape)
-    
-    # Adiciona ruído à janela original
-    test_array = test_array_original + noise
+    # Aplica variação realista (scaling + noise)
+    test_array, scale_factor = generate_realistic_variation(test_array_original)
     
     true_label = int(random_activity)  # Atividade 1-7
     test_array_shape = test_array.shape
     
-    # Extração de Features ou Embeddings
+    # Extração de Features ou Embeddings da amostra de teste (com variação aplicada)
     if model_type == 'embeddings':
-        X = _extract_embeddings(test_array)
+        X_test = _extract_embeddings(test_array)
     else:
-        X = _extract_features(test_array)
+        X_test = _extract_features(test_array)
+    
+    # IDENTIFICAR ÍNDICE MAIS PRÓXIMO NO DATASET PARA REMOVER
+    # Calcula distância euclidiana entre X_test e todas as amostras do dataset
+    distances = np.linalg.norm(X_full - X_test, axis=1)
+    test_idx = np.argmin(distances)
+    
+    # Remove a amostra de teste do dataset de treino
+    train_mask = np.ones(len(X_full), dtype=bool)
+    train_mask[test_idx] = False
+    
+    X_train = X_full[train_mask]
+    y_train = y_labels[train_mask]
+    n_train_samples = len(y_train)
+    
+    # ETAPA 1: Normaliza dados de treino
+    scaler = StandardScaler()
+    X_normalized = scaler.fit_transform(X_train)
+    
+    # ETAPA 2: Aplica redução dimensional (se aplicável)
+    pca_model = None
+    relieff_indices = None
+    
+    if reduction == 'pca':
+        # Calcula PCA nos dados normalizados
+        pca_full, _ = apply_pca(X_normalized, n_components=None)
+        cumsum_var = np.cumsum(pca_full.explained_variance_ratio_)
+        n_components = np.argmax(cumsum_var >= 0.90) + 1
+        
+        # Aplica PCA com n_components otimizado
+        pca_model, X_normalized = apply_pca(X_normalized, n_components=n_components)
+        
+    elif reduction == 'relieff':
+        # Calcula ReliefF nos dados normalizados
+        relieff_scores = calculate_relieff_score(
+            X_normalized, y_train, n_neighbors=10,
+            n_samples=min(100, len(X_normalized))
+        )
+        relieff_indices = np.argsort(relieff_scores)[::-1][:15]
+        X_normalized = X_normalized[:, relieff_indices]
+    
+    # ETAPA 3: Aplica SMOTE nos dados normalizados e reduzidos
+    X_balanced, y_balanced = balance_dataset_smote(X_normalized, y_train, n_neighbors=5, verbose=False)
+    n_balanced_samples = len(y_balanced)
+    
+    # ETAPA 4: Treina k-NN
+    knn_model = KNeighborsClassifier(n_neighbors=best_k, metric='manhattan', weights='distance')
+    knn_model.fit(X_balanced, y_balanced)
     
     # ETAPA 5: Normalização da amostra de teste
-    X_normalized_test = scaler.transform(X.reshape(1, -1))
+    X_normalized_test = scaler.transform(X_test.reshape(1, -1))
     
     # ETAPA 6: Aplica a mesma redução dimensional
     if pca_model is not None:
@@ -180,16 +170,6 @@ def run_classification(model_name, distributions_within, distributions_between,
     prediction = knn_model.predict(X_processed_test)
     predicted_label = int(prediction[0])
     
-    # Prepara modelo treinado para retorno
-    trained_model_output = {
-        'scaler': scaler,
-        'knn_model': knn_model,
-        'pca_model': pca_model,
-        'relieff_indices': relieff_indices,
-        'n_train_samples': n_train_samples,
-        'n_balanced_samples': n_balanced_samples
-    }
-    
     # Retorna dicionário com todos os resultados
     return {
         'best_k': best_k,
@@ -198,9 +178,8 @@ def run_classification(model_name, distributions_within, distributions_between,
         'n_train_samples': n_train_samples,
         'n_balanced_samples': n_balanced_samples,
         'test_array_shape': test_array_shape,
-        'noise_std': noise_std.mean(),
-        'predicted_label': predicted_label,
-        'trained_model': trained_model_output
+        'scale_factor': scale_factor,
+        'predicted_label': predicted_label
     }
 
 
@@ -259,3 +238,22 @@ def _extract_embeddings(sensor_array):
         embeddings = feature_encoder(x_input).cpu().numpy()
     
     return embeddings[0]
+
+
+def generate_realistic_variation(sensor_array):
+    """
+    Gera uma variação realista de uma janela de sensores.
+    Combina Scaling (variação de esforço) com Noise (ruído do sensor).
+    """
+    # Simula variação de força/intensidade (cria um fator de intensidade de 0.9 a 1.1)
+    scale_factor = np.random.uniform(0.9, 1.1)
+    scaled_array = sensor_array * scale_factor
+    
+    # Simula imperfeição do sensor (adiciona ruído gaussiano com desvio padrão de 10% do desvio padrão original)
+    noise_std = np.std(sensor_array, axis=0)
+    noise = np.random.normal(0, noise_std * 0.1, sensor_array.shape)
+    
+    # Combina os dois
+    new_array = scaled_array + noise
+    
+    return new_array, scale_factor

@@ -17,6 +17,12 @@ def detect_outliers_iqr(data):
     """
     Deteta outliers usando o método IQR (Tukey).
     Outliers: valores fora do intervalo [Q1 - 1.5*IQR, Q3 + 1.5*IQR]
+
+    Args:
+        data (numpy.ndarray): Array 1D com os dados a analisar
+
+    Returns:
+        numpy.ndarray: Array booleano indicando posições de outliers
     """
     # Calcula limites IQR
     Q1 = np.percentile(data, 25)

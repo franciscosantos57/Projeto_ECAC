@@ -31,13 +31,16 @@ def sample_data(data, sample_fraction=10, random_state=42):
 
 def kmeans_clustering(data, n_clusters, max_iter=100, random_state=42):
     """
-    EXERCÍCIO 3.6: Implementação do algoritmo K-Means.
+    Implementa o algoritmo K-Means clustering.
+
+    Args:    
+        data (numpy.ndarray): Dados para clustering (n_samples, n_features)
+        n_clusters (int): Número de clusters
+        max_iter (int): Número máximo de iterações
+        random_state (int): Seed para reprodutibilidade
     
-    Algoritmo iterativo que agrupa dados em k clusters:
-    1. Inicializa k centroides aleatórios
-    2. Atribui cada ponto ao centroide mais próximo
-    3. Recalcula centroides como média dos pontos
-    4. Repete até convergência
+    Returns:
+        dict: Resultados do clustering (labels, centroids, distances, inertia, n_iter)
     """
     np.random.seed(random_state)
     n_samples, n_features = data.shape

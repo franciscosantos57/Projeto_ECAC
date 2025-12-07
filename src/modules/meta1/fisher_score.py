@@ -29,19 +29,13 @@ def calculate_fisher_score(X, y, verbose=True):
     """
     Calcula Fisher Score para cada feature.
     
-    Parâmetros:
-    -----------
-    X : np.ndarray
-        Matriz de features [n_samples, n_features]
-    y : np.ndarray
-        Array de labels [n_samples]
-    verbose : bool
-        Se True, imprime informações durante o cálculo
-        
-    Retorna:
-    --------
-    scores : np.ndarray
-        Array com Fisher Score de cada feature [n_features]
+    Args:
+        X: Feature matrix (n_samples, n_features)
+        y: Labels (n_samples,)
+        verbose: Se True, imprime progresso
+
+    Returns:
+        fisher_scores: Array com Fisher Score de cada feature [n_features]
     """
     n_samples, n_features = X.shape
     classes = np.unique(y)
@@ -99,19 +93,13 @@ def rank_features_fisher(fisher_scores, feature_names, top_k=10):
     """
     Rankeia features por Fisher Score (ordem decrescente).
     
-    Parâmetros:
-    -----------
-    fisher_scores : np.ndarray
-        Array com Fisher Score de cada feature [n_features]
-    feature_names : list
-        Lista com nomes das features
-    top_k : int
-        Número de melhores features a retornar
-        
-    Retorna:
-    --------
-    ranking : list of tuples
-        Lista de tuplas (feature_name, score, rank) ordenada por score
+    Args:
+        fisher_scores: Array com Fisher Score de cada feature [n_features]
+        feature_names: Lista com nomes das features [n_features]
+        top_k: Número de features a incluir no ranking
+
+    Returns:
+        ranking: Lista de tuplas (feature_name, score, rank)
     """
     # Ordenar índices por score (decrescente)
     sorted_indices = np.argsort(fisher_scores)[::-1]
@@ -130,12 +118,9 @@ def print_fisher_ranking(ranking, title="Fisher Score - Top Features"):
     """
     Imprime ranking de features formatado.
     
-    Parâmetros:
-    -----------
-    ranking : list of tuples
-        Lista de tuplas (feature_name, score, rank)
-    title : str
-        Título do ranking
+    Args:
+        ranking: Lista de tuplas (feature_name, score, rank)
+        title: Título do ranking
     """
     print(f"\n{title}")
     print("-" * 60)

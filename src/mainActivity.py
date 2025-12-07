@@ -73,8 +73,11 @@ def main():
     Inclui carregamento de dados, análise de outliers e visualizações.
     """
     # ========== CONFIGURAÇÕES ==========
-    USE_CACHED_FEATURES = True   # Se True, carrega features do cache; se False, recalcula
-    USE_SKLEARN_KNN = True       # Se True, usa sklearn k-NN; se False, usa implementação própria
+
+    # Se True, carrega features do cache; se False, recalcula
+    USE_CACHED_FEATURES = True
+    # Se True, usa sklearn k-NN; se False, usa implementação própria
+    USE_SKLEARN_KNN = True
     
     print("=" * 60)
     print("PROJETO ECAC - ENGENHARIA DE CARACTERÍSTICAS PARA APRENDIZAGEM COMPUTACIONAL")
@@ -98,7 +101,7 @@ def main():
         start_time = time.time()
         
         participant_id = 0
-        print(f"Carregando dados do participante {participant_id}...")
+        print(f"A carregar dados do participante {participant_id}...")
         
         single_participant_data = load_participant_data(participant_id)
         print(f"Dados carregados: {single_participant_data.shape[0]} amostras, {single_participant_data.shape[1]} colunas")
@@ -109,7 +112,7 @@ def main():
         print("Formato: [Dev_ID, Acc_X, Acc_Y, Acc_Z, Gyro_X, Gyro_Y, Gyro_Z, Mag_X, Mag_Y, Mag_Z, Timestamp, Activity]")
         print("-" * 105)
         
-        # Mostrar primeiras 10 linhas da matriz com formatação melhorada
+        # Mostra primeiras 10 linhas da matriz com formatação melhorada
         print("Primeiras 10 amostras:")
         print(f"{'#':<3} {'Dev':<3} {'Acc_X':<8} {'Acc_Y':<8} {'Acc_Z':<8} {'Gyro_X':<8} {'Gyro_Y':<8} {'Gyro_Z':<8} {'Mag_X':<8} {'Mag_Y':<8} {'Mag_Z':<8} {'Time':<8} {'Act':<3}")
         print("-" * 105)
@@ -127,7 +130,7 @@ def main():
         print("Exercício 2 concluído!")
         
         # Carrega dados de todos os participantes para exercícios seguintes
-        print(f"\nCARREGANDO TODOS OS PARTICIPANTES PARA ANÁLISE GLOBAL")
+        print(f"\nA CARREGAR TODOS OS PARTICIPANTES PARA ANÁLISE GLOBAL")
         print("-" * 60)
         start_time = time.time()
         all_data, participant_info = load_all_participants_data()
@@ -139,11 +142,11 @@ def main():
         print("-" * 60)
         start_time = time.time()
         
-        print("Analisando módulos dos sensores (acelerómetro, giroscópio, magnetómetro)")
-        print("Combinando dados de todos os participantes")
+        print("A analisar módulos dos sensores (acelerómetro, giroscópio, magnetómetro)")
+        print("A combinar dados de todos os participantes")
         print("Separados por atividade e dispositivo")
         
-        print("\nCriando boxplots organizados em grid...")
+        print("\nA criar boxplots organizados em grelha...")
 
         # Cria pasta para este exercício
         output_dir_31 = "plots/meta1/exercicio_3.1_boxplot"
@@ -159,18 +162,18 @@ def main():
         print("-" * 60)
         start_time = time.time()
         
-        print("Analisando densidade de outliers usando método IQR (Tukey)")
-        print("Focando apenas nos sensores do pulso direito")
+        print("A analisar densidade de outliers a usar método IQR (Tukey)")
+        print("A focar apenas nos sensores do pulso direito")
         print("Dados combinados de todos os participantes")
         
-        print("\nCalculando densidades de outliers...")
+        print("\nA calcular densidades de outliers...")
 
         # Cria pasta para este exercício
         output_dir_32 = "plots/meta1/exercicio_3.2_outlier_density"
         os.makedirs(output_dir_32, exist_ok=True)
         results = calculate_outlier_density(all_data, "todos_participantes", output_dir=output_dir_32)
         
-        print("\nAnalisando padrões...")
+        print("\nA analisar padrões...")
         analyze_outlier_patterns(results)
         
         execution_times['Exercício 3.2'] = time.time() - start_time
@@ -196,11 +199,11 @@ def main():
         print(f"\nEXERCÍCIO 3.4: DETEÇÃO DE OUTLIERS COM Z-SCORE")
         print("-" * 60)
         start_time = time.time()
-        print("Criando plots separados por atividade e dispositivo")
+        print("A criar plots separados por atividade e dispositivo")
         print("Outliers em VERMELHO, pontos normais em AZUL")
-        print("Testando com k = 3, 3.5 e 4")
+        print("A testar com k = 3, 3.5 e 4")
         
-        print("\nGerando gráficos (isto pode demorar alguns segundos)...")
+        print("\nA gerar gráficos (isto pode demorar alguns segundos)...")
 
         # Cria pasta para este exercício com subpastas por k
         output_dir_34 = "plots/meta1/exercicio_3.4_zscore"
@@ -215,8 +218,8 @@ def main():
         print(f"\nEXERCÍCIO 3.5: COMPARAÇÃO IQR vs Z-SCORE")
         print("-" * 60)
         start_time = time.time()
-        print("Comparando métodos para sensores do pulso direito")
-        print("Analisando densidades de outliers obtidas com cada método")
+        print("A comparar métodos para sensores do pulso direito")
+        print("A analisar densidades de outliers obtidas com cada método")
         
         # Cria pasta para este exercício
         output_dir_35 = "plots/meta1/exercicio_3.5_comparacao"
@@ -231,13 +234,13 @@ def main():
         print(f"\nEXERCÍCIO 3.6 e 3.7: K-MEANS CLUSTERING PARA DETEÇÃO DE OUTLIERS")
         print("-" * 60)
         start_time = time.time()
-        print("Implementando algoritmo K-Means (ex 3.6)")
-        print("Aplicando K-Means para detectar outliers (ex 3.7)")
-        print("Testando diferentes números de clusters: k = 3, 5, 7")
-        print("Usando espaço dos módulos dos sensores (3D)")
-        print("Usando amostra de 1/10 dos dados para eficiência")
+        print("A implementar algoritmo K-Means (ex 3.6)")
+        print("A aplicar K-Means para detetar outliers (ex 3.7)")
+        print("A testar diferentes números de clusters: k = 3, 5, 7")
+        print("A usar espaço dos módulos dos sensores (3D)")
+        print("A usar amostra de 1/10 dos dados para eficiência")
         
-        print("\nExecutando análise K-Means...")
+        print("\nA executar análise K-Means...")
 
         # Cria pasta para este exercício com subpastas
         output_dir_36 = "plots/meta1/exercicio_3.6_3.7_kmeans"
@@ -255,7 +258,7 @@ def main():
             output_dir_zoom=output_dir_zoom
         )
         
-        print("\nComparando resultados K-Means com Z-Score...")
+        print("\nA comparar resultados K-Means com Z-Score...")
         compare_with_zscore(all_data, kmeans_results, k_zscore=3)
         
         execution_times['Exercícios 3.6 e 3.7'] = time.time() - start_time
@@ -267,13 +270,13 @@ def main():
         print("-" * 60)
         start_time = time.time()
         
-        print("Implementando análise com DBSCAN (usando sklearn)")
-        print("Testando apenas as 2 primeiras combinações de parâmetros:")
+        print("A implementar análise com DBSCAN (a usar sklearn)")
+        print("A testar apenas as 2 primeiras combinações de parâmetros:")
         print("  • eps (epsilon): raio da vizinhança")
         print("  • min_samples: mínimo de pontos para formar cluster")
         print("NOTA: DBSCAN usa 1/50 dos dados para evitar problemas de memória")
         
-        print("\nExecutando análise DBSCAN...")
+        print("\nA executar análise DBSCAN...")
         
         # Cria pasta para este exercício
         output_dir_371 = "plots/meta1/exercicio_3.7.1_dbscan"
@@ -299,9 +302,9 @@ def main():
         print("-" * 60)
         start_time = time.time()
         
-        print("Testando normalidade das distribuições (Kolmogorov-Smirnov)")
-        print("Aplicando testes de significância (ANOVA ou Kruskal-Wallis)")
-        print("Determinando poder discriminante dos módulos dos sensores")
+        print("A testar normalidade das distribuições (Kolmogorov-Smirnov)")
+        print("A aplicar testes de significância (ANOVA ou Kruskal-Wallis)")
+        print("A determinar poder discriminante dos módulos dos sensores")
         
         # Executa análise de significância
         significance_results = analyze_statistical_significance(all_data, output_dir=None)
@@ -329,8 +332,8 @@ def main():
         # Se não há cache ou USE_CACHED_FEATURES=False, extrai do zero
         if cached_data is None:
             print("Baseado no artigo de Zhang & Sawchuk")
-            print("Implementando sliding windows (5s, overlap 50%)")
-            print("Extraindo features temporais e espectrais")
+            print("A implementar sliding windows (5s, sobreposição 50%)")
+            print("A extrair features temporais e espectrais")
             
             # Parâmetros de segmentação
             window_size_sec = 5
@@ -339,12 +342,12 @@ def main():
             
             print(f"\nParâmetros de segmentação:")
             print(f"  • Tamanho da janela: {window_size_sec}s")
-            print(f"  • Overlap: {overlap * 100}%")
+            print(f"  • Sobreposição: {overlap * 100}%")
             print(f"  • Taxa de amostragem: {sampling_rate} Hz")
             print(f"  • Amostras por janela: {window_size_sec * sampling_rate}")
             
             # Cria sliding windows
-            print(f"\nCriando sliding windows...")
+            print(f"\nA criar sliding windows...")
             windows = create_sliding_windows(all_data, 
                                             window_size_sec=window_size_sec,
                                             overlap=overlap,
@@ -357,7 +360,7 @@ def main():
             print(f"  • Janelas válidas: {window_stats['valid_windows']}")
             print(f"  • Janelas descartadas: {window_stats['discarded_windows']} ({window_stats['discard_rate']:.2f}%)")
             
-            # Extrai features e embeddings simultaneamente
+            # Extrai features e embeddings em simultâneo
             feature_matrix, labels, metadata, feature_names, embeddings = extract_features_from_windows(
                 windows, 
                 sampling_rate=sampling_rate,
@@ -373,7 +376,7 @@ def main():
             # Análise do feature set
             analyze_feature_set(feature_matrix, labels, metadata, feature_names)
             
-            # Salva feature set e embeddings
+            # Guarda feature set e embeddings
             save_feature_set(feature_matrix, labels, metadata, feature_names, 
                             output_dir="data/features", embeddings=embeddings)
             print(f"Dados guardados: data/features/")
@@ -387,22 +390,22 @@ def main():
         print("-" * 60)
         start_time = time.time()
         
-        print("Aplicando PCA para comprimir o espaço de features")
+        print("A aplicar PCA para comprimir o espaço de features")
         
-        # Normalizar features com Z-Score
+        # Normaliza features com Z-Score
         X_normalized, scaler = normalize_features_zscore(feature_matrix)
         
-        # Aplicar PCA com todos os componentes
+        # Aplica PCA com todos os componentes
         pca_full, X_transformed_full = apply_pca(X_normalized, n_components=None)
         
-        # Analisar variância
+        # Analisa variância
         variance_info = analyze_variance_explained(pca_full)
         n_components_75 = variance_info['n_components_for_threshold'][0.75]
         
-        # Imprimir análise
+        # Imprime análise
         print_pca_analysis(variance_info, feature_matrix.shape[1])
         
-        # Criar gráfico de variância
+        # Cria gráfico de variância
         output_dir_43 = "plots/meta1/exercicio_4.3_pca"
         plot_path = create_variance_plot(pca_full, variance_info, output_dir=output_dir_43)
         print(f"Gráfico salvo: {plot_path}")
@@ -423,9 +426,9 @@ def main():
         print("-" * 60)
         start_time = time.time()
         
-        print("Identificando top-10 features com Fisher Score e ReliefF")
+        print("A identificar top-10 features com Fisher Score e ReliefF")
         
-        # Comparar métodos de seleção de features
+        # Compara métodos de seleção de features
         feature_selection_results = compare_feature_selection_methods(
             X=feature_matrix,
             y=labels,
@@ -494,7 +497,7 @@ def main():
         print("-" * 60)
         start_time = time.time()
         
-        print("Considerando apenas atividades 1 a 7 (conforme especificação)")
+        print("A considerar apenas atividades 1 a 7 (conforme especificação)")
         
         # Filtra apenas atividades 1 a 7 em TODOS os dados da Meta 2
         activity_mask = (labels >= 1) & (labels <= 7)
@@ -527,8 +530,8 @@ def main():
         print("-" * 60)
         start_time = time.time()
         
-        print("Gerando 3 amostras sintéticas para Atividade 4 do Participante 3")
-        print("Usando apenas amostras desse participante")
+        print("A gerar 3 amostras sintéticas para Atividade 4 do Participante 3")
+        print("A usar apenas amostras desse participante")
         print("Visualização 2D com primeiras 2 features")
         
         # Filtra dados do participante 3, atividades 1-7
@@ -567,7 +570,7 @@ def main():
         print("-" * 60)
         start_time = time.time()
         
-        print("\nUsando embeddings já filtrados (atividades 1-7)...")
+        print("\nA usar embeddings já filtrados (atividades 1-7)...")
         
         print(f"\nComparação com Features Dataset (ambos filtrados 1-7):")
         print(f"  Features:  {X_filtered.shape[0]} segmentos x {X_filtered.shape[1]} features (handcrafted)")
@@ -582,8 +585,8 @@ def main():
         print("-" * 60)
         start_time = time.time()
         
-        print("Aplicando splits TVT (60-20-20%) em FEATURES e EMBEDDINGS (atividades 1-7)")
-        print("Comparando estratégias within-subject vs between-subject")
+        print("A aplicar splits TVT (60-20-20%) em FEATURES e EMBEDDINGS (atividades 1-7)")
+        print("A comparar estratégias within-subject vs between-subject")
         
         # EXERCÍCIO 3.1: Within-Subject Split (FEATURES)
         print(f"\nEXERCÍCIO 3.1: WITHIN-SUBJECT SPLIT")
@@ -660,7 +663,7 @@ def main():
         print("-" * 60)
         start_time = time.time()
         
-        print("Preparando 3 cenários para FEATURES e EMBEDDINGS:")
+        print("A preparar 3 cenários para FEATURES e EMBEDDINGS:")
         print("  a) All features/embeddings (normalizado)")
         print("  b) PCA-reduced (90% variância)")
         print("  c) ReliefF-selected (top 15 features)")
@@ -709,7 +712,7 @@ def main():
         
         print("Implementação própria de k-NN (Exercício 4.1)")
         print("Função de métricas de classificação (Exercício 4.2)")
-        print("Testando com k ímpares de 1 a 20")
+        print("A testar com k ímpares de 1 a 20")
         
         # Seleciona um cenário para demonstração (Features, Within-Subject, All features)
         print("\nCenário de teste: Features (Within-Subject, All features)")
@@ -726,10 +729,10 @@ def main():
         print(f"Val:   {X_val.shape[0]} amostras")
         print(f"Test:  {X_test.shape[0]} amostras")
         
-        # Aplicar SMOTE ao treino
+        # Aplica SMOTE ao treino
         X_train_balanced, y_train_balanced = balance_dataset_smote(X_train, y_train, n_neighbors=5, verbose=True)
         
-        # Treinar e avaliar k-NN com diferentes valores de k (ímpares de 1 a 20)
+        # Treina e avalia k-NN com diferentes valores de k (ímpares de 1 a 20)
         k_values = list(range(1, 21, 2))  # [1, 3, 5, 7, 9, 11, 13, 15, 17, 19]
         
         print(f"\n{'─' * 60}")
@@ -748,7 +751,7 @@ def main():
                 model = train_knn(X_train_balanced, y_train_balanced, k=k, verbose=False)
                 y_pred_val = predict_knn(model, X_val, verbose=False)
             
-            # Calcula métricas customizadas (sem imprimir)
+            # Calcula métricas personalizadas (sem imprimir)
             metrics = calculate_metrics(y_true=y_val, y_pred=y_pred_val, average='macro', verbose=False)
             
             # Armazena resultado (incluindo predições e métricas completas)
@@ -787,18 +790,18 @@ def main():
         print("-" * 60)
         start_time = time.time()
         
-        print("Avaliando 2 splits × 3 cenários × 2 datasets = 12 configurações\n")
+        print("A avaliar 2 splits × 3 cenários × 2 datasets = 12 configurações\n")
         
         # Define valores de k para tuning
         k_values_tuning = list(range(1, 21, 2))
         
-        # Verificar cache
+        # Verifica cache
         use_cache = cache_exists()
         if use_cache:
-            print("✓ Cache encontrado! Carregando automaticamente...\n")
+            print("✓ Cache encontrado! A carregar automaticamente...\n")
             distributions_within, distributions_between = load_results()
         else:
-            # Inicializar logger
+            # Inicializa logger
             logger = ModelLogger(output_dir='logs')
             print(f"Logs: {logger.tuning_file} | {logger.final_file}\n")
             
@@ -815,7 +818,7 @@ def main():
             ]
         
             total_evals = 2 * 2 * 3  # 2 splits × 2 datasets × 3 cenários
-            pbar = tqdm(total=total_evals, desc="Avaliando modelos", ncols=80)
+            pbar = tqdm(total=total_evals, desc="A avaliar modelos", ncols=80)
         
             for split_name, dist_dict, split_fn, split_kwargs in configs:
                 for dataset_name, X_data in [('features', X_filtered), ('embeddings', embeddings_filtered)]:
@@ -825,14 +828,14 @@ def main():
                             n_iterations, split_name, **split_kwargs
                         )
                     
-                        # Faz tuning independente em cada split
+                        # Faz ajuste independente em cada split
                         dist = evaluate_with_multiple_splits(
                             splits, prepare_all_scenarios, train_knn, calculate_metrics,
                             k_values_tuning, use_sklearn=USE_SKLEARN_KNN,
                             logger=logger, split_name=split_name, dataset_name=dataset_name
                         )
                     
-                        # Calcula best_k usando moda dos 10 splits
+                        # Calcula best_k a usar moda dos 10 splits
                         from scipy import stats as scipy_stats
                         best_k_mode = int(scipy_stats.mode(dist[scenario]['best_ks'], keepdims=False)[0])
                     
@@ -849,28 +852,28 @@ def main():
         
             pbar.close()
         
-            # Guardar resultados
+            # Guarda resultados
             save_results(distributions_within, distributions_between)
         
         # Tabelas resumo com médias e desvios padrão
         print_summary_table(distributions_within, distributions_between, 'features')
         print_summary_table(distributions_within, distributions_between, 'embeddings')
         
-        # Gerar matrizes de confusão médias para features_all
-        print("\nGerando matrizes de confusão médias para FEATURES_ALL...")
+        # Gera matrizes de confusão médias para features_all
+        print("\nA gerar matrizes de confusão médias para FEATURES_ALL...")
         cm_path_within = plot_average_confusion_matrix(distributions_within, 'within', 'features')
         cm_path_between = plot_average_confusion_matrix(distributions_between, 'between', 'features')
         print(f"✓ Matriz de confusão (within-subject): {cm_path_within}")
         print(f"✓ Matriz de confusão (between-subject): {cm_path_between}")
         
-        # Criar visualizações dos testes de hipótese
-        print(f"\nGráficos salvos:")
+        # Cria visualizações dos testes de hipótese
+        print(f"\nGráficos guardados:")
         results_within_hyp, plot_within = plot_hypothesis_tests(distributions_within, 'within')
         results_between_hyp, plot_between = plot_hypothesis_tests(distributions_between, 'between')
         print(f"✓ {plot_within}")
         print(f"✓ {plot_between}")
         
-        # Encontrar melhor modelo
+        # Encontra melhor modelo
         print("\n─── MELHORES MODELOS (Média de 10 iterações) ───")
         
         best_w, score_w, k_w, acc_w, _, comp_w = find_best_model(distributions_within)
@@ -905,10 +908,10 @@ def main():
         
         # Chama função para classificação com o modelo escolhido
         # Formato: '{split}_{dataset}_{scenario}'
-        model_name = 'between_features_all'
+        model_name = 'within_features_all'
         
         print(f"Modelo escolhido: {model_name}")
-        print("Executando classificação de exemplo...\n")
+        print("A executar classificação de exemplo...\n")
         
         result = run_classification(
             model_name,
@@ -916,8 +919,7 @@ def main():
             distributions_between,
             X_filtered,
             embeddings_filtered,
-            y_filtered,
-            participant_ids_filtered
+            y_filtered
         )
         
         # Imprime resultados da classificação de exemplo
@@ -926,16 +928,16 @@ def main():
         print(f"\n─── Seleção de Amostra de Teste ───")
         print(f"  • Participante selecionado: {result['participant']}")
         print(f"  • Atividade selecionada: {result['true_label']}")
-        print(f"  • Ruído adicionado (desvio padrão médio): {result['noise_std']:.4f}")
+        print(f"  • Array shape: {result['test_array_shape']}")
+        print(f"  • Variação aplicada (scale factor): {result['scale_factor']:.4f}")
         print(f"\n─── Dataset de Treino ───")
-        print(f"  • Total de amostras (dataset completo): {result['n_train_samples']}")
+        print(f"  • Total de amostras (após remover teste): {result['n_train_samples']}")
         print(f"\n─── Balanceamento com SMOTE ───")
         print(f"  • Total de amostras balanceadas: {result['n_balanced_samples']}")
         print(f"\n─── Treinamento do Modelo ───")
         print(f"  • Modelo treinado com {result['n_balanced_samples']} amostras balanceadas")
-        print(f"  • Array shape: {result['test_array_shape']}")
-        print(f"  • Label verdadeira: Atividade {result['true_label']}")
         print(f"\n─── Classificação ───")
+        print(f"  • Label verdadeira: Atividade {result['true_label']}")
         print(f"  • Label predita: Atividade {result['predicted_label']}")
         print(f"  • Resultado: {'✓ CORRETA' if result['predicted_label'] == result['true_label'] else '✗ INCORRETA'}")
         
@@ -944,9 +946,9 @@ def main():
         print(f"AVALIAÇÃO DE ACCURACY")
         print(f"{'─' * 60}")
 
-        n_iterations = 200
+        n_iterations = 1000
 
-        print(f"Executando {n_iterations} classificações aleatórias...\n")
+        print(f"A executar {n_iterations} classificações aleatórias...\n")
         
         evaluation = evaluate_deployment_accuracy(
             model_name=model_name,
@@ -955,7 +957,6 @@ def main():
             X_features=X_filtered,
             X_embeddings=embeddings_filtered,
             y_labels=y_filtered,
-            participant_ids=participant_ids_filtered,
             n_iterations=n_iterations
         )
         

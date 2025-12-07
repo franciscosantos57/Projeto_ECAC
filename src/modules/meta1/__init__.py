@@ -1,19 +1,6 @@
 """
 Módulos da Meta 1: Engenharia de Características
 Análise de outliers e extração de features
-
-Inclui:
-- data_loader: Carregamento de dados de sensores
-- boxplot_visualization: Visualização de boxplots dos módulos dos sensores
-- outlier_density_analysis: Análise de densidade de outliers
-- zscore_outlier_detection: Detecção de outliers usando Z-Score
-- kmeans_outlier_detection: Detecção de outliers usando K-Means
-- dbscan_outlier_detection: Detecção de outliers usando DBSCAN
-- statistical_significance: Testes de significância estatística
-- feature_extraction: Extração de features temporais e espectrais
-- feature_analysis: Análise e salvamento de features
-- pca_analysis: Análise de componentes principais
-- feature_comparison: Comparação entre métodos de seleção de features
 """
 
 from .data_loader import (
@@ -80,14 +67,9 @@ from .feature_comparison import (
 )
 
 __all__ = [
-    # Data loading
     'load_participant_data',
     'load_all_participants_data',
-    
-    # Visualization
     'create_boxplot_visualization',
-    
-    # Outlier detection
     'calculate_outlier_density',
     'analyze_outlier_patterns',
     'detect_outliers_zscore',
@@ -99,17 +81,11 @@ __all__ = [
     'detect_outliers_dbscan',
     'analyze_dbscan_outliers',
     'summarize_dbscan_analysis',
-    
-    # Statistical analysis
     'analyze_statistical_significance',
-    
-    # Feature extraction and analysis
     'extract_features_from_windows',
     'analyze_feature_set',
     'save_feature_set',
     'load_feature_set',
-    
-    # PCA
     'normalize_features_zscore',
     'apply_pca',
     'analyze_variance_explained',
@@ -118,8 +94,6 @@ __all__ = [
     'print_component_contributions',
     'example_feature_compression',
     'print_compression_example',
-    
-    # Feature comparison
     'compare_feature_selection_methods',
     'demonstrate_feature_extraction',
     'analyze_selection_approach'
