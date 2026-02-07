@@ -46,7 +46,6 @@ from .model_evaluation import (
     evaluate_with_multiple_splits,
     hypothesis_testing,
     print_summary_table,
-    plot_average_confusion_matrix
 )
 
 from .hypothesis_visualization import (

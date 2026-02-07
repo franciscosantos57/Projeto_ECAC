@@ -32,7 +32,6 @@ NOTA: Usaremos implementação do sklearn (ReliefF) através do pacote skrebate
 """
 
 import numpy as np
-from sklearn.neighbors import NearestNeighbors
 
 
 def calculate_relieff_score(X, y, n_neighbors=10, n_samples=100, verbose=True):
